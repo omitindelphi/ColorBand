@@ -143,7 +143,6 @@ function TForm1.PerimeterTop: string;
 var
   i: integer;
   clr: Tcolor;
-  sClr: string;
   bmp: TBitmap;
 begin
   Result := '';

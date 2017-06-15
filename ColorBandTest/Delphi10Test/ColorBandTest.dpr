@@ -14,7 +14,6 @@ uses
   DUnitX.TestFramework,
   ClrBand in '..\ClrBand.pas',
   ColorBandTestUnit in 'ColorBandTestUnit.pas',
-  FormUnit in 'FormUnit.pas' {Form1},
   ClrBandInterface in 'ClrBandInterface.pas';
 
 var
