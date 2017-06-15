@@ -56,14 +56,12 @@ begin
    R := GetRValue(AColor);
    G := GetGValue(Acolor);
    B := GetBValue(AColor);
-//   WriteLn(Result,
    Result := Format('GenX: %d, Case %d, ClrN %d, RGB %d %d %d',[GeneralizedCoordinate, CaseNumber, ColorNumber, R,G,B])
                              +' ' + Format('(%d %d) (%d %d) (%d %d) (%d %d) (%d %d) (%d %d)',
                              [
                              Parr[0].X, Parr[0].Y, Parr[1].X, Parr[1].Y, Parr[2].X, Parr[2].Y,
                              Parr[3].X, Parr[3].Y, Parr[4].X, Parr[4].Y, Parr[5].X, Parr[5].Y
                              ])
- //          );
 {$ENDIF}
 end;
 
@@ -93,7 +91,9 @@ var
   R:TRect;
   StoColor:TColor;
   StoStyle:TBrushStyle;
+  sResult: string;
 begin
+  sResult := '';
   if Bandwidth <= 0 then
     Bandwidth := 2;
   R:=Rect;
@@ -136,7 +136,7 @@ begin
             Parr[2].X:=Left+i+BandWidth; Parr[2].Y:=Bottom;
             PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 1, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 1, k,ColorList.Items[k], Parr);
             {$ENDIF}
             Continue;
           end;
@@ -151,7 +151,7 @@ begin
               Parr[3].X:=xc; Parr[3].Y:=R.Bottom;
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 2, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 2, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -166,7 +166,7 @@ begin
               Parr[3].X:=Right; Parr[3].Y:=Bottom;
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 3, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 3, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -182,7 +182,7 @@ begin
               Parr[4]:=Point(Right,Bottom);
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 4, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 4, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -198,7 +198,7 @@ begin
               Parr[3].x:=R.right;	Parr[3].y:=R.bottom-i+w;
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 5, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 5, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -213,7 +213,7 @@ begin
               Parr[4].X:=R.Right; Parr[4].Y:=R.Top + (R.Right - xb);
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 6, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 6, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -228,7 +228,7 @@ begin
             Parr[3].x:=xc;	        Parr[3].y:=R.Bottom;
             PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 7, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 7, k,ColorList.Items[k], Parr);
             {$ENDIF}
             Continue;
           end;
@@ -244,7 +244,7 @@ begin
               Parr[4]:=Point(Right,Bottom);
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 8, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 8, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -259,7 +259,7 @@ begin
               Parr[3].X:=Right; Parr[3].Y:=Bottom-(i-w)-BandWidth;
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 9, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 9, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -274,7 +274,7 @@ begin
               Parr[2]:=point(Right,Top);
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 10, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 10, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -290,7 +290,7 @@ begin
             Parr[4].x:=xc;	        Parr[4].y:=R.Bottom;
             PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 11, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 11, k,ColorList.Items[k], Parr);
             {$ENDIF}
             Continue;
           end;
@@ -305,7 +305,7 @@ begin
               Parr[3]:=Point(Xc,Bottom);
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 12, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 12, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -320,7 +320,7 @@ begin
               Parr[3]:=Point(Right,Bottom);
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 13, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 13, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -338,7 +338,7 @@ begin
               Parr[5] := point(xd , Bottom);
               PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 14, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 14, k,ColorList.Items[k], Parr);
             {$ENDIF}
               Continue;
           end;
@@ -354,7 +354,7 @@ begin
             Parr[3]:=Point(Right,Bottom);
             PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 15, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 15, k,ColorList.Items[k], Parr);
             {$ENDIF}
             Continue;
           end;
@@ -369,7 +369,7 @@ begin
             Parr[3].x:=R.right;	        Parr[3].y:=R.bottom-i+w;
             PolyDraw(Canvas,ColorList, Parr,  k, n);
             {$IFDEF LOGGING}
-            Result := Result + Logging( i, 16, k,ColorList.Items[k], Parr);
+            sResult := sResult + Logging( i, 16, k,ColorList.Items[k], Parr);
             {$ENDIF}
             Continue;
           end;
@@ -379,6 +379,7 @@ begin
   Canvas.TextRect(Rect,Rect.Left+1,Rect.Top+1,Text);
   Canvas.Brush.Style:=StoStyle;
   Canvas.Brush.Color:=StoColor;
+  Result := sResult;
 end;
 
 procedure ColorStripedRect(Canvas:TCanvas;Rect:TRect; Colors:variant; BandWidth:integer; Text:String);

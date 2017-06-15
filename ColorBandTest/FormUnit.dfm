@@ -1,9 +1,9 @@
 object Form1: TForm1
   Left = 522
   Top = 159
+  Width = 378
+  Height = 600
   Caption = 'Form1'
-  ClientHeight = 561
-  ClientWidth = 362
   Color = clBtnFace
   Constraints.MaxHeight = 1200
   Constraints.MaxWidth = 1400
@@ -62,10 +62,9 @@ object Form1: TForm1
       Top = 133
       Width = 121
       Height = 41
-      Kind = bkOK
-      NumGlyphs = 2
       TabOrder = 0
       OnClick = BitBtn1Click
+      Kind = bkOK
     end
     object TrackBar1: TTrackBar
       Left = 16
