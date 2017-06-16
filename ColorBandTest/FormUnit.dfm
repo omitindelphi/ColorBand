@@ -1,9 +1,9 @@
 object Form1: TForm1
   Left = 522
   Top = 159
-  Width = 378
-  Height = 600
   Caption = 'Form1'
+  ClientHeight = 561
+  ClientWidth = 362
   Color = clBtnFace
   Constraints.MaxHeight = 1200
   Constraints.MaxWidth = 1400
@@ -43,13 +43,6 @@ object Form1: TForm1
       Height = 13
       Caption = 'Label1'
     end
-    object SpeedButton1: TSpeedButton
-      Left = 8
-      Top = 168
-      Width = 23
-      Height = 22
-      OnClick = SpeedButton1Click
-    end
     object Label2: TLabel
       Left = 112
       Top = 112
@@ -62,9 +55,10 @@ object Form1: TForm1
       Top = 133
       Width = 121
       Height = 41
+      Kind = bkOK
+      NumGlyphs = 2
       TabOrder = 0
       OnClick = BitBtn1Click
-      Kind = bkOK
     end
     object TrackBar1: TTrackBar
       Left = 16
@@ -88,6 +82,7 @@ object Form1: TForm1
       Min = -200
       Frequency = 10
       TabOrder = 2
+      OnChange = TrackBar2Change
     end
     object CheckBox1: TCheckBox
       Left = 16

@@ -201,8 +201,9 @@ begin
             colorlist.Add(clSilver)
          else
             colorList.Add(clWindow) ;
-      ColorBandsOfList(DBGrid1.Canvas, Rect, colorList,
+      ColorBandsOfListShift(DBGrid1.Canvas, Rect, colorList,
                 Trackbar1.Position, // it is width of color strip
+                Rect.Left,                  // this is color-band shift, in pixels
                 Dataset.FieldByName(Column.FieldName).AsString );
    finally
     colorList.Free;

@@ -18,25 +18,27 @@ type
     [TearDown]
     procedure TearDown;
      [Test]
-     [TestCase('Test-W240-H319-BW102', '319, 240, 102')]
-     procedure BandTest(Width, Height, BandWidth:integer);
+     [TestCase('Test-W240-H319-BW102', '319, 240, 102, 0')]
+     procedure BandTest(Width, Height, BandWidth, BandShift:integer);
 
      [Test]
-     [TestCase('Test-W240-H319-BW102-Neighborhood', '319, 240, 102')]
-     [TestCase('Test-W215-H415-BW273-Neighborhood', '215, 489, 273')]
-     [TestCase('Test-W184-H801-BW457-Neighborhood', '184, 801, 223')]
-     procedure NeighborTest(Width, Height, BandWidth: integer);
+     [TestCase('Test-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
+     [TestCase('Test-W215-H415-BW273-Neighborhood', '215, 489, 273, 0')]
+     [TestCase('Test-W184-H801-BW223-Neighborhood', '184, 801, 223, 0')]
+     [TestCase('Test-W184-H801-BW223-Neighbor+shift', '184, 801, 223, 90')]
+     [TestCase('Test-W184-H801-BW223-Neighbor-shift', '184, 801, 223, -90')]
+     procedure NeighborTest(Width, Height, BandWidth, BandShift: integer);
   end;
 
 implementation
 uses
     FormUnit;
 
-procedure TColorBandTest.BandTest(Width, Height, BandWidth:integer);
+procedure TColorBandTest.BandTest(Width, Height, BandWidth, BandShift:integer);
 var
   sTop, sBottom: string;
 begin
-  FClrBand.SetTestDim(Width, Height, BandWidth, False);//(319, 240, 102);
+  FClrBand.SetTestDim(Width, Height, BandWidth, BandShift, False);
   sTop := FClrBand.PerimeterTop;
   sBottom := FClrBand.PerimeterBottom;
   Assert.AreEqual(sTop, sBottom, 'Band border coordinates by top and bottom line do not match');
@@ -45,11 +47,11 @@ begin
 
 end;
 
-procedure TColorBandTest.NeighborTest(Width, Height, BandWidth:integer);
+procedure TColorBandTest.NeighborTest(Width, Height, BandWidth, BandShift:integer);
 var
   sTop, sBottom: string;
 begin
-  FClrBand.SetTestDim(Width, Height, BandWidth, True);//(319, 240, 102);
+  FClrBand.SetTestDim(Width, Height, BandWidth, BandShift, True);
   sTop := FClrBand.PerimeterTop;
   sBottom := FClrBand.PerimeterBottom;
   Assert.IsTrue(Length(sTop) = 0, 'There are color changes beyond left - top border of picture');
