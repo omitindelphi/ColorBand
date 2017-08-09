@@ -1,9 +1,9 @@
 object Form1: TForm1
   Left = 923
   Top = 419
-  Width = 587
-  Height = 503
   Caption = 'Form1'
+  ClientHeight = 464
+  ClientWidth = 571
   Color = clBtnFace
   Constraints.MinHeight = 500
   Constraints.MinWidth = 580
@@ -17,7 +17,7 @@ object Form1: TForm1
   OnResize = FormResize
   PixelsPerInch = 96
   TextHeight = 13
-  object DBGrid1: TDBGrid
+  object DBGridDemo: TDBGrid
     Left = 0
     Top = 0
     Width = 571
@@ -31,7 +31,7 @@ object Form1: TForm1
     TitleFont.Height = -11
     TitleFont.Name = 'MS Sans Serif'
     TitleFont.Style = []
-    OnDrawColumnCell = DBGrid1DrawColumnCell
+    OnDrawColumnCell = DBGridDemoDrawColumnCell
   end
   object Panel1: TPanel
     Left = 0
@@ -55,7 +55,7 @@ object Form1: TForm1
         'Observe color mix on row change')
       TabOrder = 0
     end
-    object TrackBar1: TTrackBar
+    object TrackBarColorBandWidth: TTrackBar
       Left = 1
       Top = 1
       Width = 569
@@ -65,7 +65,7 @@ object Form1: TForm1
       Min = 2
       Position = 20
       TabOrder = 1
-      OnChange = TrackBar1Change
+      OnChange = TrackBarColorBandWidthChange
     end
     object GroupBox1: TGroupBox
       Left = 8
@@ -78,7 +78,7 @@ object Form1: TForm1
       object cbRed: TCheckBox
         Left = 32
         Top = 21
-        Width = 97
+        Width = 83
         Height = 17
         Caption = 'Red'
         TabOrder = 0
@@ -87,7 +87,7 @@ object Form1: TForm1
       object cbGreen: TCheckBox
         Left = 121
         Top = 21
-        Width = 97
+        Width = 92
         Height = 17
         Caption = 'Green'
         TabOrder = 1

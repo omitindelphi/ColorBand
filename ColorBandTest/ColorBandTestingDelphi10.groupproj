@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{68D5BE51-47A7-4B40-9CDF-5B3725B66917}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="ColorBandVisualTest.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Delphi10Test\ColorBandTest.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="ColorBandVisualTest">
+        <MSBuild Projects="ColorBandVisualTest.dproj"/>
+    </Target>
+    <Target Name="ColorBandVisualTest:Clean">
+        <MSBuild Projects="ColorBandVisualTest.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ColorBandVisualTest:Make">
+        <MSBuild Projects="ColorBandVisualTest.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ColorBandTest">
+        <MSBuild Projects="Delphi10Test\ColorBandTest.dproj"/>
+    </Target>
+    <Target Name="ColorBandTest:Clean">
+        <MSBuild Projects="Delphi10Test\ColorBandTest.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ColorBandTest:Make">
+        <MSBuild Projects="Delphi10Test\ColorBandTest.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="ColorBandVisualTest;ColorBandTest"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="ColorBandVisualTest:Clean;ColorBandTest:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="ColorBandVisualTest:Make;ColorBandTest:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

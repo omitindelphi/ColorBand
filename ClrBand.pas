@@ -5,6 +5,7 @@ uses Classes,Windows,Graphics
 ,Variants
 ,Types
 ,SysUtils
+,AnsiStrings
 ;
 
 type
@@ -19,7 +20,7 @@ end;
 PColorList=^TColorList;
 
 function ColorBandsOfList(Canvas:TCanvas;Rect:TRect;ColorList:TColorList; BandWidth:integer; Text:string): string;
-function ColorBandsOfListShift(Canvas:TCanvas;Rect:TRect;ColorList:TColorList; BandWidth, BandShift:integer; Text:string): string;
+function ColorBandsOfListMovable(Canvas:TCanvas;Rect:TRect;ColorList:TColorList; BandWidth, BandShift:integer; Text:string): string;
 procedure ColorStripedRect(Canvas:TCanvas;Rect:TRect; Colors:variant; BandWidth:integer;Text:String);
 function ColorStripedRectShiftDebug(Canvas:TCanvas; const Rect:TRect; const Colors:variant; const BandWidth, BandShift:integer; const Text:String): string;
 
@@ -30,7 +31,73 @@ uses
   UITypes;
 {$ENDIF}
 
-type TarrPoint =  Array[0..5] of TPoint;
+type
+  TarrPoint =  Array[0..5] of TPoint;
+  TCanvasPoligon = record
+                    NofSides: integer;
+                    Vortex: Array Of TPoint;
+                    ColorFill: Tcolor;
+                    PoligonKind: integer;
+                    constructor Init(NofSides: integer; ColorFill: TColor; PoligonKindNumber: integer);
+                    function SerializeAsSVGFragment: string;
+                  end;
+
+  TCanvasPoligonInsider = record helper for TCanvasPoligon
+    function SerializeVortexes: string;
+    function SerializeFillStyle: string;
+    function SerializePoligonKind: string;
+  end;
+
+  constructor TCanvasPoligon.Init(NofSides: Integer; ColorFill: TColor; PoligonKindNumber: integer);
+  begin
+    SetLength(Vortex, NofSides);
+    Self.NofSides := NofSides;
+    Self.ColorFill := ColorFill;
+    Self.PoligonKind := PoligonKindNumber;
+  end;
+
+  function TCanvasPoligon.SerializeAsSVGFragment: string;
+  var
+    kVortex: TPoint;
+  begin
+     // <polygon points="200,10 250,190 160,210" style="stroke:none;fill:rgb(0,255,0)" />
+    Result := '<polygon points='
+            + SerializeVortexes();
+
+    Result := Result + ' ' + SerializeFillStyle();
+    Result := Result
+            + ' />';
+    Result := Result + SerializePoligonKind();
+  end;
+
+{ TCanvasPoligonInsider }
+function TCanvasPoligonInsider.SerializeVortexes: string;
+var
+    kVortex: TPoint;
+ begin
+     // "200,10 250,190 160,210"
+     for kVortex in Self.Vortex do
+        Result := Result + Format('%d,%d ', [kVortex.X, kVortex.Y]);
+    Result := AnsiLeftStr(Result, Length(Result) - 1);
+    Result := AnsiQuotedStr(Result, '"');
+end;
+
+function TCanvasPoligonInsider.SerializeFillStyle: string;
+begin
+  //style="stroke:none;fill:rgb(0,255,0)"
+  Result :=  ' '
+           + Format('"style="stroke:none;fill:"rgb(%d , %d, %d)"',
+                                                  [getRValue(ColorFill),
+                                                   getGValue(ColorFill),
+                                                   getBValue(Colorfill)
+                                                  ]);
+end;
+
+function TCanvasPoligonInsider.SerializePoligonKind: string;
+begin
+  Result := Char(13) + char(10)
+          + Format('<!-- Poligon variation Case %d -->',[PoligonKind]);
+end;
 
 function Maxim(i1,i2:integer):integer;
 begin
@@ -87,7 +154,7 @@ end;
 
 function ColorBandsOfList(Canvas:TCanvas;Rect:TRect;ColorList:TColorList; BandWidth:integer; Text:string): string;
 begin
-  Result := ColorBandsOfListShift(Canvas, Rect, ColorList, BandWidth, 0, Text);
+  Result := ColorBandsOfListMovable(Canvas, Rect, ColorList, BandWidth, 0, Text);
 end;
 
 procedure ColorStripedRect(Canvas:TCanvas;Rect:TRect; Colors:variant; BandWidth:integer; Text:String);
@@ -131,7 +198,7 @@ if VarType(Colors)=varInteger then
    Clist:=TColorList.Create;
    try
       CList.Add(c);
-      Result := ColorBandsOfListShift(Canvas,Rect,CList,BandWidth,0,Text);
+      Result := ColorBandsOfListMovable(Canvas,Rect,CList,BandWidth,BandShift,Text);
       Exit;
    finally
      Clist.Free;
@@ -146,14 +213,14 @@ if (VarType(Colors) and varArray)=varArray then
            c:=Colors[i];
              Clist.Add(TColor(c));
          end;
-      Result := ColorBandsOfListShift(Canvas,Rect,CList,BandWidth, BandShift, Text);
+      Result := ColorBandsOfListMovable(Canvas,Rect,CList,BandWidth, BandShift, Text);
     finally
       Clist.free;
     end;
   end;
 end;
 
-function ColorBandsOfListShift(Canvas:TCanvas;Rect:TRect;ColorList:TColorList; BandWidth, BandShift:integer; Text:string): string;
+function ColorBandsOfListMovable(Canvas:TCanvas;Rect:TRect;ColorList:TColorList; BandWidth, BandShift:integer; Text:string): string;
 var
   i,j,k,w,h,xa,xb,xc,xd,n:integer;
   Parr:array[0..5] of TPoint;

@@ -36,11 +36,8 @@ type
     procedure SetBandwidth(Value: integer);
     procedure FillImage(BandWidth, BandShift: integer);
     function ColorNaming(clr: Tcolor): string;
-    //procedure FillFullForm(BandWidth: integer);
   protected
-//    procedure FillIn( BandWidth: integer);
     procedure SetTestDim(const ImgX, ImgY, bandWidth, bandShift: integer;  toDisplayNeighborhood: boolean);
-    //procedure SetTestNeighborhood(ImgX, ImgY, bandWidth: integer);
     function PerimeterTop:string;
     function PerimeterBottom: string;
     procedure Teardown;
@@ -88,8 +85,7 @@ begin
     try
       ColorList.Add(clRed);
       ColorList.Add(clLime);
-      a.CommaText := //ClrBand.ColorStripedRectDebug(B.Canvas,R, FVarColors, BandWidth, '  A');
-                     ClrBand.ColorBandsOfListShift(B.Canvas,R, ColorList, BandWidth, Trackbar2.Position, '  A');
+      a.CommaText := ClrBand.ColorBandsOfListMovable(B.Canvas,R, ColorList, BandWidth, Trackbar2.Position, '  A some text');
       sCases := Label2.Caption;
       for i := 0 to a.Count - 1 do
         if CompareText(a[i], 'Case') = 0 then
@@ -100,7 +96,6 @@ begin
                      Length(',' + a[i + 1] + ',') - 1
                     );
       Label2.Caption := sCases;
-              //Label2.Caption := Label2.Caption + a[i + 1] + ',' ;
     finally
       a.Free;
       ColorList.Free;
@@ -117,12 +112,6 @@ begin
 end;
 
 
-//procedure TForm1.FillIn(BandWidth: integer);
-//begin
-//   SetTestDim(102, 240, 32, ShowNeighborhood);
-//end;
-
-
 procedure TForm1.FormCreate(Sender: TObject);
 begin
    FVarColors := VarArrayCreate([0,1], varInteger);
@@ -136,6 +125,7 @@ end;
 procedure TForm1.CheckBox1Click(Sender: TObject);
 begin
    self.ShowNeighborhood := CheckBox1.Checked;
+   FillImage(GetBandwidth, FBandShift);
 end;
 
 function TForm1.ColorNaming(clr: TColor):string;
