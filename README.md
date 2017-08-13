@@ -1,9 +1,12 @@
 # ColorBand
-Pleasant-looking color slanted strips to draw in grids; use procedures in ClrBand.pas; 
+Pleasant-looking color slanted strips to draw in grids; use procedure in ClrBand.pas; 
+Used Spring4Delphi framework for collection handling; 
+
+https://bitbucket.org/sglienke/spring4d
 
 Goal: outstanding color marking of some records in dataset, with possibility of random mix, and preservation of row selection.
 Proposed metod drawing grid cell content on the canvas (Windows surface), and method returns string with content of the cell described as SVG fragment, for testing and fun.
-Advantage of proposed method is its speed, since no secondary canvas is ever created.
+Advantage of proposed method is its speed, since no secondary canvas is ever created, no float arithmetics and such.
 
 Example of use in ColorDatasetExample project: event handler for cell draw make use of proposed method.
 

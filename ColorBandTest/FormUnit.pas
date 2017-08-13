@@ -7,6 +7,8 @@ uses
   Controls, Forms, Dialogs, ExtCtrls, StdCtrls, Buttons,
   ClrBandInterface,
   ComCtrls
+  ,Spring.Collections
+  ,AnsiStrings
   ;
 
 type
@@ -28,6 +30,7 @@ type
     procedure TrackBar2Change(Sender: TObject);
   private
     { Private declarations }
+    FSVGFragment: string;
     FShowNeighborhood: boolean;
     FBandWidth:integer;
     FBandShift: integer;
@@ -36,7 +39,9 @@ type
     procedure SetBandwidth(Value: integer);
     procedure FillImage(BandWidth, BandShift: integer);
     function ColorNaming(clr: Tcolor): string;
+    procedure DisplayUnusedCases(SVGFragment: string);
   protected
+    function GetSVGFragment: string;
     procedure SetTestDim(const ImgX, ImgY, bandWidth, bandShift: integer;  toDisplayNeighborhood: boolean);
     function PerimeterTop:string;
     function PerimeterBottom: string;
@@ -44,8 +49,8 @@ type
     property ShowNeighborhood: boolean read FShowNeighborhood write FShowNeighborhood;
   public
     { Public declarations }
-
   end;
+
 
 var
   Form1: TForm1;
@@ -53,8 +58,16 @@ var
 implementation
 uses
   ClrBand;
-
 {$R *.dfm}
+
+type
+  TSVGTestHelper = class helper for TForm1
+  private
+    function InitializeFullSetOfCases: IList<integer>;
+    function ExtractUsedCasesFromSVG(SVG: string): IList<integer>;
+    function ExtractListOfCommentsFromSVG(SVG: string): IList<string>;
+  end;
+
 
 procedure TForm1.FillImage(BandWidth, BandShift: integer);
 var
@@ -63,7 +76,7 @@ var
   a: TStringList;
   i: integer;
   sCases: string;
-  ColorList:TColorList;
+  ColorList: IList<TColor>;
 begin
   Label1.Caption := 'BandW: ' + IntToStr(Bandwidth) +' Pos ' + IntToStr(trackBar1.Position)
   +' h ' + IntTostr(Image1.height) + ' w ' + intToStr(Image1.Width);
@@ -81,11 +94,12 @@ begin
     else
       R := Rect(0,0, B.Width - 1, B. Height - 1);
     a := TStringlist.Create;
-    ColorList := TcolorList.Create;
     try
+      ColorList :=  TCollections.CreateList<TColor>;
       ColorList.Add(clRed);
       ColorList.Add(clLime);
-      a.CommaText := ClrBand.ColorBandsOfListMovable(B.Canvas,R, ColorList, BandWidth, Trackbar2.Position, '  A some text');
+      FSVGFragment := ClrBand.ColorBandsOfListMovable(B.Canvas,R, ColorList, BandWidth, Trackbar2.Position, '  A some text');
+      a.CommaText := FSVGFragment;
       sCases := Label2.Caption;
       for i := 0 to a.Count - 1 do
         if CompareText(a[i], 'Case') = 0 then
@@ -98,12 +112,23 @@ begin
       Label2.Caption := sCases;
     finally
       a.Free;
-      ColorList.Free;
     end;
     Image1.Picture.Bitmap := B;
   finally
     B.Free;
   end;
+end;
+
+procedure TForm1.DisplayUnusedCases( SVGFragment: string);
+var
+  FullCaseCollection: IList<integer>;
+  UsedCasecollection: IList<integer>;
+  i: integer;
+begin
+
+
+
+
 end;
 
 procedure TForm1.BitBtn1Click(Sender: TObject);
@@ -209,6 +234,11 @@ begin
   Result := FBandwidth;
 end;
 
+function TForm1.GetSVGFragment: string;
+begin
+  Result := FSVGFragment;
+end;
+
 procedure TForm1.SetBandwidth(Value: integer);
 begin
   TrackBar1.OnChange := nil;
@@ -248,5 +278,45 @@ begin
 end;
 
 
+
+{ TSVGTestHelper }
+
+function TSVGTestHelper.ExtractUsedCasesFromSVG(
+  SVG: string): IList<integer>;
+begin
+
+end;
+
+function TSVGTestHelper.ExtractListOfCommentsFromSVG(SVG: string): IList<string>;
+var
+  CommentHeadPlace, CommentTailPlace: integer;
+  SVGComments: IList<string>;
+begin
+   CommentHeadPlace := 1;
+   Result := TCollections.CreateList<string>;
+   while CommentHeadPlace > 0 do
+   begin
+     CommentHeadPlace := Posex('<!--', SVG, CommentHeadPlace);
+     if CommentHeadPlace > 0 then
+     begin
+       CommentTailPlace := Posex('-->', SVG, CommentHeadPlace);
+       if CommentTailPlace >0 then
+          Result.Add(Copy(SVG,
+                          CommentHeadPlace + Length('<!--'),
+                          CommentTailPlace
+                          )
+                    );
+     end;
+   end;
+end;
+
+function TSVGTestHelper.InitializeFullSetOfCases: IList<integer>;
+var
+  i: integer;
+begin
+   Result := TCollections.CreateList<integer>;
+   for i := 1 to 16 do
+      Result.Add(i);
+end;
 
 end.

@@ -7,6 +7,7 @@ uses
   Dialogs, Grids, DBGrids, DB, DBClient, StdCtrls
   ,ClrBand, ExtCtrls, ComCtrls
   ,MidasLib, DBCtrls
+  ,Spring.Collections
   ;
 
 type

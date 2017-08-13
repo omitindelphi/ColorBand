@@ -19,7 +19,7 @@ type
     procedure TearDown;
      [Test]
      [TestCase('Test-W240-H319-BW102', '319, 240, 102, 0')]
-     procedure BandTest(Width, Height, BandWidth, BandShift:integer);
+     procedure TestForCorrectBandsWithinDeclaredRect(Width, Height, BandWidth, BandShift:integer);
 
      [Test]
      [TestCase('Test-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
@@ -27,14 +27,18 @@ type
      [TestCase('Test-W184-H801-BW223-Neighborhood', '184, 801, 223, 0')]
      [TestCase('Test-W184-H801-BW223-Neighbor+shift', '184, 801, 223, 90')]
      [TestCase('Test-W184-H801-BW223-Neighbor-shift', '184, 801, 223, -90')]
-     procedure NeighborTest(Width, Height, BandWidth, BandShift: integer);
+     procedure TestForColorBandsStayContainedWithinRect(Width, Height, BandWidth, BandShift: integer);
+
+     [Test]
+     [TestCase('Test-SVG-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
+     procedure TestForSVGOutputMatching(Width, Height, BandWidth, BandShift: integer);
   end;
 
 implementation
 uses
     FormUnit;
 
-procedure TColorBandTest.BandTest(Width, Height, BandWidth, BandShift:integer);
+procedure TColorBandTest.TestForCorrectBandsWithinDeclaredRect(Width, Height, BandWidth, BandShift:integer);
 var
   sTop, sBottom: string;
 begin
@@ -47,7 +51,19 @@ begin
 
 end;
 
-procedure TColorBandTest.NeighborTest(Width, Height, BandWidth, BandShift:integer);
+procedure TColorBandTest.TestForSVGOutputMatching(Width, Height, BandWidth,
+  BandShift: integer);
+var
+  sTop, sBottom,SVG: string;
+begin
+  FClrBand.SetTestDim(Width, Height, BandWidth, BandShift, False);
+  sTop := FClrBand.PerimeterTop;
+  sBottom := FClrBand.PerimeterBottom;
+  SVG := FClrBand.GetSVGFragment();
+  Assert.IsTrue(Length(SVG) > 0, 'No SVG generated at all');
+end;
+
+procedure TColorBandTest.TestForColorBandsStayContainedWithinRect(Width, Height, BandWidth, BandShift:integer);
 var
   sTop, sBottom: string;
 begin
