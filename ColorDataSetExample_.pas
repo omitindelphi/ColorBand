@@ -169,7 +169,7 @@ const
 var
    Dataset:Tdataset;
    id:integer;
-   colorList:TColorList;
+   colorList:IList<TColor>;
    RowStatusSet: TRowStatusSet;
    cRed1,cLime1,cYellow1:Tcolor;
 begin
@@ -188,7 +188,7 @@ begin
         cred1:=DimColor(clRed,dim); cLime1:=DimColor(clLime,dim); cYellow1:=DimColor(clYellow,dim);
    end;
 
-   colorList:=TColorList.Create;
+   colorList := TCollections.CreateList<TColor>;
    try
       if Red in RowStatusSet  then
         colorList.Add(cRed1);
@@ -206,9 +206,7 @@ begin
                 TrackBarColorBandWidth.Position, // it is width of color strip
                 Rect.Left,                  // this is color-band shift, in pixels
                 Dataset.FieldByName(Column.FieldName).AsString );
-   finally
-    colorList.Free;
-   end;
+
 
 end;
 

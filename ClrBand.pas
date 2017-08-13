@@ -502,7 +502,7 @@ function TCanvasPolygonInsider.SerializeVortexes: string;
 var
     kVortex: TPoint;
  begin
-     // "200,10 250,190 160,210"
+     //Example as comma-pair, separated by space: "200,10 250,190 160,210"
      for kVortex in VertexesCase.Vertexes do
         Result := Result + Format('%d,%d ', [kVortex.X, kVortex.Y]);
     Result := AnsiLeftStr(Result, Length(Result) - 1);
@@ -511,7 +511,6 @@ end;
 
 function TCanvasPolygonInsider.SerializeFillStyle: string;
 begin
-  //style="stroke:none;fill:rgb(0,255,0)"
   Result :=  ' '
            + Format('"style="stroke:none;fill:"rgb(%d ,%d, %d)"',
                                                   [getRValue(ColorFill),
