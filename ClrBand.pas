@@ -5,21 +5,11 @@ uses Classes,Windows,Graphics
 ,Variants
 ,Types
 ,SysUtils
-,AnsiStrings
+,StrUtils
 ,Spring
 ,Spring.Collections
+,Xml.VerySimple
 ;
-
-type
-TColorList=class(TList)
-protected
-    function Get(Index: Integer): TColor;virtual;
-    procedure Put(Index: Integer; Item: TColor);virtual;
-public
-    function Add(Item: TColor): Integer; virtual;
-    property Items[Index: Integer]: TColor read Get write Put; default;
-end;
-PColorList=^TColorList;
 
 function ColorBandsOfListMovable( Canvas:TCanvas;
                                   Rect:TRect;
@@ -42,8 +32,6 @@ type
     BrushColor: TColor;
     BrushStyle: TBrushStyle;
   end;
-
-   TNullablePoint = Nullable<Tpoint>;
 
   TParallelogram = record
     public
@@ -69,16 +57,12 @@ type
        );
    end;
 
-   TDynPointArray = TArray<Tpoint>;
+   TpointArray = TArray<Tpoint>;
 
    TVertexesCase = record
-     Vertexes: TDynPointArray;
+     Vertexes: TpointArray;
      PolygonCase: integer;
    end;
-
-//   TVertexGenerator = reference to function (Cell:TRect; Band: TParallelogram): TDynPointArray;
-//   VertexFabricant = array[1..2] of TVertexGenerator;
-
 
   SerializablePolygon = interface
   ['{BF18BFBB-53D5-431B-94F6-A40C6EF4132E}']
@@ -91,7 +75,6 @@ type
 
   TCanvasPolygon = class(TInterfacedObject, SerializablePolygon)
   private
-    NofSides: integer;
     VertexesCase: TVertexesCase;
     ColorFill: Tcolor;
     FVertexPopulatorHolder: TCrossGeneratorFunction;
@@ -123,6 +106,18 @@ type
     function SerializeVortexes: string;
     function SerializeFillStyle: string;
     function SerializePolygonKind: string;
+  end;
+
+  TCellInsider = class
+  private
+
+    class function ColorToRGBString(Color: TColor): string; static;
+    class function SVGTagWrap(SVGFragment: string; Rect: TRect): string; static;  public
+    class function StoreCanvasPenBrush(Canvas: TCanvas): GraphicStorage;
+    class procedure RestoreCanvasPenBrush(Storage: GraphicStorage; Canvas: TCanvas);
+    class function TextToSVGFragment(const Text: string;
+                                     const Rect: TRect;
+                                     Canvas: TCanvas): string;
   end;
 
   function TCanvasPolygon.PolygonCase: integer;
@@ -260,11 +255,9 @@ type
 
   class function TCanvasPolygon.GenerateVertexCase06(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
-    iterator: integer;
     R: TRect;
   begin
     Result.PolygonCase := 6;
-    iterator := Band.xd - Cell.Left;
     R := Cell;
     with Band do
     begin
@@ -279,11 +272,9 @@ type
 
   class function TCanvasPolygon.GenerateVertexCase07(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
-    iterator: integer;
     R: TRect;
   begin
     Result.PolygonCase := 7;
-    iterator := Band.xd - Cell.Left;
     R := Cell;
     with Band do
     begin
@@ -351,11 +342,9 @@ type
 
   class function TCanvasPolygon.GenerateVertexCase11(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
-    iterator: integer;
     R: TRect;
   begin
     Result.PolygonCase := 11;
-    iterator := Band.xd - Cell.Left;
     R := Cell;
     with Band do
     begin
@@ -370,11 +359,9 @@ type
 
   class function TCanvasPolygon.GenerateVertexCase12(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
-    iterator: integer;
     R: TRect;
   begin
     Result.PolygonCase := 12;
-    iterator := Band.xd - Cell.Left;
     R := Cell;
     with Band do
     begin
@@ -404,11 +391,9 @@ type
 
   class function TCanvasPolygon.GenerateVertexCase14(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
-    iterator: integer;
     R: TRect;
   begin
     Result.PolygonCase := 14;
-    iterator := Band.xd - Cell.Left;
     R := Cell;
     with Band do
     begin
@@ -457,8 +442,6 @@ type
   end;
 
   constructor TCanvasPolygon.CreateAsCellToCrossParallelogram(Cell:TRect; Band: TParallelogram; ColorFill: TColor);
-  var
-     VertexGeneratorFunction: TCrossGeneratorFunction;
   begin
     inherited Create;
     FVertexPopulatorHolder := SelectorOfIntersectionCase(Cell, Band);
@@ -509,33 +492,59 @@ var
     Result := AnsiQuotedStr(Result, '"');
 end;
 
+class function TCellInsider.TextToSVGFragment(
+  const Text: string; const Rect: TRect; Canvas: TCanvas): string;
+begin
+// Example:   <text x="10" y="40"
+//                 style="font-family: Times New Roman;
+//                       font-size: 44px; stroke: #00ff00; fill: #0000ff;">
+//    SVG text styling
+//             </text>
+//     Canvas.TextRect(Rect,Rect.Left+1,Rect.Top+1,Text);
+  Result := Format('<text x="%d" y="%d" style="font-family: %s; font-size: %dpx; fill: %s;">',
+                    [ Rect.Left + 1, Rect.Top + 1 + Canvas.Font.Size, Canvas.Font.Name, Canvas.Font.Size,
+                      ColorToRGBString(Canvas.Font.Color)
+                    ])
+           + TXmlVerySimple.Escape(Text)
+           +'</text>';
+end;
+
+class function TCellInsider.SVGTagWrap(SVGFragment: string; Rect: TRect): string;
+begin
+//Example: <svg height="30" width="200"> ...  </svg>
+  Result := Format('<svg version="1.1" baseProfile="full" '
+                 + 'height="%d" width="%d" xmlns="http://www.w3.org/2000/svg">' ,
+                    [Rect.Height,Rect.Width])
+           + #13#10 + SVGFragment + #13#10
+           +'</svg>'+ #13#10;
+end;
+
+class function TCellInsider.ColorToRGBString(Color: TColor): string;
+begin
+  Result := Format('rgb(%d ,%d, %d)',
+                    [getRValue(Color),
+                     getGValue(Color),
+                     getBValue(Color)
+                    ]);
+end;
+
 function TCanvasPolygonInsider.SerializeFillStyle: string;
 begin
   Result :=  ' '
-           + Format('"style="stroke:none;fill:"rgb(%d ,%d, %d)"',
-                                                  [getRValue(ColorFill),
-                                                   getGValue(ColorFill),
-                                                   getBValue(Colorfill)
-                                                  ]);
+           + Format('style="fill: %s;"',
+                    [
+                       TCellInsider.ColorToRGBString(Self.ColorFill)
+                    ]);
 end;
 
 function TCanvasPolygonInsider.SerializePolygonKind: string;
 begin
   Result := Char(13) + char(10)
-          + Format('<!-- Polygon variation Case %d -->',[PolygonCase()]);
-end;
-
-function Maxim(i1,i2:integer):integer;
-begin
-  if i1>=i2 then Result:=i1 else Result:=i2;
-end;
-function Minim(i1,i2:integer):integer;
-begin
-  if i1<=i2 then Result:=i1 else Result:=i2;
+          + Format('<!-- Polygon variation Case %d -->'+#13+#10,[PolygonCase()]);
 end;
 
 
-function StoreCanvasPenBrush(Canvas: TCanvas): GraphicStorage;
+class function TCellInsider.StoreCanvasPenBrush(Canvas: TCanvas): GraphicStorage;
 begin
   Result.PenStyle := Canvas.Pen.Style;
   Result.PenColor := Canvas.Pen.Color;
@@ -544,7 +553,7 @@ begin
   Result.BrushStyle := Canvas.Brush.Style;
 end;
 
-procedure RestoreCanvasPenBrush(Storage: GraphicStorage; Canvas: TCanvas);
+class procedure TCellInsider.RestoreCanvasPenBrush(Storage: GraphicStorage; Canvas: TCanvas);
 begin
   Canvas.Pen.Style := Storage.PenStyle;
   Canvas.Pen.Color := Storage.PenColor;
@@ -559,8 +568,8 @@ function ColorBandsOfListMovable( Canvas:TCanvas;
                                   BandWidth, BandShift:integer;
                                   Text:string): string;
 var
-  i,j,k,w,h,xa,xb,xc,xd,n:integer;
-  Parr:array[0..5] of TPoint;
+  i,j,w,h,xa,xb,xc,xd:integer;
+
   R:TRect;
   NormalizedBandShift: integer;
   OriginalCanvasSettings: GraphicStorage;
@@ -568,7 +577,7 @@ var
   Band: TParallelogram;
   Polygon: SerializablePolygon;
 begin
-  OriginalCanvasSettings := StoreCanvasPenBrush(Canvas);
+  OriginalCanvasSettings := TCellInsider.StoreCanvasPenBrush(Canvas);
   try
 
     if Bandwidth <= 2 then
@@ -617,29 +626,12 @@ begin
     end;
     Canvas.Brush.Style:=bsClear;
     Canvas.TextRect(Rect,Rect.Left+1,Rect.Top+1,Text);
-
+    Result := Result + TCellInsider.TextToSVGFragment( Text,Rect,Canvas);
+    Result := TCellInsider.SVGTagWrap(Result, Rect);
   finally
-    RestoreCanvasPenBrush(OriginalCanvasSettings, Canvas);
+    TCellInsider.RestoreCanvasPenBrush(OriginalCanvasSettings, Canvas);
   end;
 
-end;
-
-
-
-{TColorList}
-function TColorList.Add(Item: TColor):Integer;
-begin
- Result:= inherited Add(Pointer(Item));
-end;
-
-function TColorList.Get(Index: Integer): TColor;
-begin
-  Result:=TColor(inherited Get(Index));
-end;
-
-procedure TColorList.Put(Index: Integer; Item: TColor);
-begin
-  inherited Put(Index,Pointer(Item))
 end;
 
 { Tparallelogram }

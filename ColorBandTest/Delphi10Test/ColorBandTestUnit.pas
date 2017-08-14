@@ -4,6 +4,7 @@ interface
 uses
    DUnitX.TestFramework
   ,ClrBandInterface
+  ,SVGImage
   ;
 
 type

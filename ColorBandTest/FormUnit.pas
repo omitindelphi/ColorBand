@@ -8,7 +8,7 @@ uses
   ClrBandInterface,
   ComCtrls
   ,Spring.Collections
-  ,AnsiStrings
+  ,StrUtils
   ;
 
 type
@@ -41,6 +41,7 @@ type
     function ColorNaming(clr: Tcolor): string;
     procedure DisplayUnusedCases(SVGFragment: string);
   protected
+    function ListOfUsedPolygonCases: IList<integer>;
     function GetSVGFragment: string;
     procedure SetTestDim(const ImgX, ImgY, bandWidth, bandShift: integer;  toDisplayNeighborhood: boolean);
     function PerimeterTop:string;
@@ -239,6 +240,12 @@ begin
   Result := FSVGFragment;
 end;
 
+
+function TForm1.ListOfUsedPolygonCases: IList<integer>;
+begin
+  Result := TCollections.CreateList<integer>;
+end;
+
 procedure TForm1.SetBandwidth(Value: integer);
 begin
   TrackBar1.OnChange := nil;
@@ -283,6 +290,8 @@ end;
 
 function TSVGTestHelper.ExtractUsedCasesFromSVG(
   SVG: string): IList<integer>;
+var
+ ExtractedSVGComments: IList<string>;
 begin
 
 end;
