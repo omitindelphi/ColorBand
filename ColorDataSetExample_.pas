@@ -188,24 +188,23 @@ begin
         cred1:=DimColor(clRed,dim); cLime1:=DimColor(clLime,dim); cYellow1:=DimColor(clYellow,dim);
    end;
 
-   colorList := TCollections.CreateList<TColor>;
-   try
-      if Red in RowStatusSet  then
-        colorList.Add(cRed1);
-      if Green in RowStatusSet then
-        colorList.Add(cLime1);
-      if Yellow in RowStatusSet then
-        colorList.Add(cYellow1);
+    colorList := TCollections.CreateList<TColor>;
+    if Red in RowStatusSet  then
+      colorList.Add(cRed1);
+    if Green in RowStatusSet then
+      colorList.Add(cLime1);
+    if Yellow in RowStatusSet then
+      colorList.Add(cYellow1);
 
-      if RowStatusSet = [] then
-         if RowIsSelected(State) then
-            colorlist.Add(clSilver)
-         else
-            colorList.Add(clWindow) ;
-      ColorBandsOfListMovable(DbGridDemo.Canvas, Rect, colorList,
-                TrackBarColorBandWidth.Position, // it is width of color strip
-                Rect.Left,                  // this is color-band shift, in pixels
-                Dataset.FieldByName(Column.FieldName).AsString );
+    if RowStatusSet = [] then
+       if RowIsSelected(State) then
+          colorlist.Add(clSilver)
+       else
+          colorList.Add(clWindow) ;
+    ColorBandsOfListMovable(DbGridDemo.Canvas, Rect, colorList,
+              TrackBarColorBandWidth.Position, // it is width of color strip
+              Rect.Left,                  // this is color-band shift, in pixels
+              Dataset.FieldByName(Column.FieldName).AsString );
 
 
 end;

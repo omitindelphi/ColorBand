@@ -16,7 +16,6 @@ function ColorBandsOfListMovable( Canvas:TCanvas;
                                   ColorList: IList<TColor> ;
                                   BandWidth, BandShift:integer;
                                   Text:string): string;
-
 implementation
 
 uses
@@ -98,6 +97,7 @@ type
     class function GenerateVertexCase16(Cell:TRect; Band: Tparallelogram): TVertexesCase;
    public
     constructor CreateAsCellToCrossParallelogram(Cell:TRect; Band: TParallelogram; ColorFill: TColor);
+    constructor CreateAsSingleColorRect(Cell: TRect; ColorToFill: Tcolor);
     function SerializeAsSVGFragment: string;
     procedure Draw(Canvas : TCanvas);
   end;
@@ -108,16 +108,22 @@ type
     function SerializePolygonKind: string;
   end;
 
+  TTextRectCanvas = record
+                      Text: string;
+                      Rect:Trect;
+                      Canvas:TCanvas;
+                      constructor Create(Text: string; Rect:TRect; Canvas: TCanvas);
+                    end;
+
   TCellInsider = class
   private
-
     class function ColorToRGBString(Color: TColor): string; static;
-    class function SVGTagWrap(SVGFragment: string; Rect: TRect): string; static;  public
-    class function StoreCanvasPenBrush(Canvas: TCanvas): GraphicStorage;
+    class function SVGTagWrap(SVGFragment: string; Rect: TRect): string; static;
+    class function PolygonFragmentToSVG(TextRectCanvas: TTextRectCanvas; PolygonFragmentSVG: string): string; static;
+    class function StoreCanvasPenBrush(Canvas: TCanvas): GraphicStorage; static;
     class procedure RestoreCanvasPenBrush(Storage: GraphicStorage; Canvas: TCanvas);
-    class function TextToSVGFragment(const Text: string;
-                                     const Rect: TRect;
-                                     Canvas: TCanvas): string;
+    class function TextToSVGFragment(TextRectCanvas: TTextRectCanvas): string; static;
+    class function GetDefaultFontName: string;
   end;
 
   function TCanvasPolygon.PolygonCase: integer;
@@ -166,6 +172,18 @@ type
       if ((xa<=R.left)and(xb>=R.right)) then  // 4-angle : 16
         begin Result := GenerateVertexCase16;  Exit; end;
     end;
+  end;
+
+  constructor TCanvasPolygon.CreateAsSingleColorRect(Cell:TRect; ColorToFill:TColor);
+  begin // complete Rect in case if only one color to fill
+    inherited Create;
+    Self.VertexesCase.PolygonCase := 0;
+    SetLength(Self.VertexesCase.Vertexes, 4);
+    Self.VertexesCase.Vertexes[0].X:= Cell.Left; Self.VertexesCase.Vertexes[0].Y:= Cell.Bottom;
+    Self.VertexesCase.Vertexes[1].X:= Cell.Left; Self.VertexesCase.Vertexes[1].Y:= Cell.Top;
+    Self.VertexesCase.Vertexes[2].X:= Cell.Right; Self.VertexesCase.Vertexes[2].Y:= Cell.Top;
+    Self.VertexesCase.Vertexes[3].X:= Cell.Right; Self.VertexesCase.Vertexes[3].Y:= Cell.Bottom;
+    Self.ColorFill := ColorToFill;
   end;
 
   class function TCanvasPolygon.GenerateVertexCase01(Cell:TRect; Band: Tparallelogram): TVertexesCase;
@@ -226,7 +244,7 @@ type
     R := Cell;
     with Band do
     begin
-      Setlength(Result.Vertexes,4);
+      Setlength(Result.Vertexes,5);
       Result.Vertexes[0].X:=xd; Result.Vertexes[0].Y:= R.Bottom;
       Result.Vertexes[1].X:= R.Left; Result.Vertexes[1].Y:= R.Bottom - iterator;
       Result.Vertexes[2].X:= R.Left; Result.Vertexes[2].Y:= R.Bottom - iterator - BandWidth;
@@ -469,6 +487,7 @@ type
 function TCanvasPolygon.SerializeAsSVGFragment: string;
   begin
      // Example: <polygon points="200,10 250,190 160,210" style="stroke:none;fill:rgb(0,255,0)" />
+    Result := '';
     if Length(VertexesCase.Vertexes) > 0 then
     begin
       Result := '<polygon points='
@@ -492,21 +511,40 @@ var
     Result := AnsiQuotedStr(Result, '"');
 end;
 
-class function TCellInsider.TextToSVGFragment(
-  const Text: string; const Rect: TRect; Canvas: TCanvas): string;
-begin
+class function TCellInsider.TextToSVGFragment(TextRectCanvas: TTextRectCanvas): string;
 // Example:   <text x="10" y="40"
 //                 style="font-family: Times New Roman;
 //                       font-size: 44px; stroke: #00ff00; fill: #0000ff;">
-//    SVG text styling
+//             SVG text styling
 //             </text>
-//     Canvas.TextRect(Rect,Rect.Left+1,Rect.Top+1,Text);
-  Result := Format('<text x="%d" y="%d" style="font-family: %s; font-size: %dpx; fill: %s;">',
-                    [ Rect.Left + 1, Rect.Top + 1 + Canvas.Font.Size, Canvas.Font.Name, Canvas.Font.Size,
-                      ColorToRGBString(Canvas.Font.Color)
-                    ])
-           + TXmlVerySimple.Escape(Text)
-           +'</text>';
+var
+  FontName: string;
+  FontSize: integer;
+  FontColor: TColor;
+begin
+  if Assigned(TextRectCanvas.Canvas) then
+  begin
+    FontName := TextRectCanvas.Canvas.Font.Name;
+    FontSize := TextRectCanvas.Canvas.Font.Size;
+    FontColor := TextRectCanvas.Canvas.Font.Color;
+  end
+  else
+  begin
+     FontName := TCellInsider.GetDefaultFontName;
+     FontSize := 10;
+     FontColor := clBlack;
+  end;
+
+
+    Result := Format('<text x="%d" y="%d" style="font-family: %s; font-size: %dpx; fill: %s;">',
+                      [ TextRectCanvas.Rect.Left + 1, TextRectCanvas.Rect.Top + 1 + FontSize,
+                        FontName,
+                        FontSize,
+                        ColorToRGBString(FontColor)
+                      ])
+             + TXmlVerySimple.Escape(TextRectCanvas.Text)
+             +'</text>';
+
 end;
 
 class function TCellInsider.SVGTagWrap(SVGFragment: string; Rect: TRect): string;
@@ -562,13 +600,36 @@ begin
   Canvas.Brush.Style := Storage.BrushStyle ;
 end;
 
+class function TCellInsider.GetDefaultFontName: string;
+var B: TBitmap;
+begin
+   B := TBitmap.Create;
+   try
+     B.Height := 10;
+     B.Width := 10;
+     Result := B.Canvas.Font.Name;
+   finally
+     B.Free;
+   end;
+end;
+
+class function TCellInsider.PolygonFragmentToSVG(TextRectCanvas: TTextRectCanvas; PolygonFragmentSVG: string): string;
+var
+  TempString: string;
+begin
+    TempString := PolygonFragmentSVG;
+    TempString := TempString + TCellInsider.TextToSVGFragment( TextRectCanvas);
+    Result := TempString;
+    Result := TCellInsider.SVGTagWrap(TempString, TextRectCanvas.Rect);
+end;
+
 function ColorBandsOfListMovable( Canvas:TCanvas;
                                   Rect:TRect;
                                   ColorList: IList<TColor> ;
                                   BandWidth, BandShift:integer;
                                   Text:string): string;
 var
-  i,j,w,h,xa,xb,xc,xd:integer;
+  xIterator,ColorIterator,w,h,xa,xb,xc,xd:integer;
 
   R:TRect;
   NormalizedBandShift: integer;
@@ -576,7 +637,10 @@ var
 
   Band: TParallelogram;
   Polygon: SerializablePolygon;
+
+  TextRectCanvas: TTextRectCanvas;
 begin
+  Result := '';
   OriginalCanvasSettings := TCellInsider.StoreCanvasPenBrush(Canvas);
   try
 
@@ -587,19 +651,25 @@ begin
 
     if ColorList.Count=1 then
       begin
-          Canvas.Brush.Color:=ColorList.Items[0];
-          Canvas.FillRect(Rect);
+          Polygon := TCanvasPolygon.CreateAsSingleColorRect(Rect,ColorList.Items[0]);
+          Polygon.Draw(Canvas);
           Canvas.TextRect(Rect,Rect.Left+1,Rect.Top+1,Text);
+          Result := Polygon.SerializeAsSVGFragment();
+          Result := TCellInsider.PolygonFragmentToSVG( TTextRectCanvas.Create(Text, Rect, Canvas), Result);
           Exit;
       end;
 
-    Canvas.Brush.Color:=clwindow;
-    Canvas.FillRect(Rect);
+    if Assigned(Canvas) then
+    begin
+      Canvas.Brush.Color:=clwindow;
+      Canvas.FillRect(Rect);
+    end;
 
-    j:=-1;
-    i:= -(Bandwidth * ColorList.Count) - NormalizedBandShift ;
-    while i > -(Bandwidth * ColorList.Count) do
-      i:= i - (Bandwidth * ColorList.Count);
+    ColorIterator := -1;
+    xIterator:= -(Bandwidth * ColorList.Count) - NormalizedBandShift ;
+
+    while xIterator > -(Bandwidth * ColorList.Count) do
+      xIterator:= xIterator - (Bandwidth * ColorList.Count);
 
     R:=Rect;
     R.Left:=Rect.Left+1;  R.Right:=Rect.Right-1;  R.Bottom:=Rect.Bottom-1;
@@ -607,29 +677,37 @@ begin
     h:=R.Bottom-R.Top;
 
     begin
-     while i < w+h
+     while xIterator < w+h
      do
       begin
-        i:=i+BandWidth;
-        Canvas.Brush.Color := clWindow;
-        xa:= R.Left+i-h; xb:=xa+BandWidth;   xc:= R.Left+i+bandwidth; xd:= R.Left+i;
-        J := j + 1;
+        xIterator:=xIterator+BandWidth;
+        ColorIterator := ColorIterator + 1;
+
+        if Assigned(Canvas) then
+          Canvas.Brush.Color := clWindow;
+
+        xa:= R.Left+xIterator-h; xb:=xa+BandWidth;   xc:= R.Left+xIterator+bandwidth; xd:= R.Left+xIterator;
         Band.A := Point(xa, R.Top); Band.B := Point(xb, R.Top);
         Band.C := Point(xc,R.Bottom); Band.D := Point(xd, R.Bottom);
 
-        Polygon := TCanvasPolygon.CreateAsCellToCrossParallelogram(R,Band, ColorList[j mod ColorList.Count] );
+        Polygon := TCanvasPolygon.CreateAsCellToCrossParallelogram(R,Band, ColorList[ColorIterator mod ColorList.Count] );
         Polygon.Draw(Canvas);
         Result := Result + Polygon.SerializeAsSVGFragment();
         Polygon := nil;
       end;
 
     end;
-    Canvas.Brush.Style:=bsClear;
-    Canvas.TextRect(Rect,Rect.Left+1,Rect.Top+1,Text);
-    Result := Result + TCellInsider.TextToSVGFragment( Text,Rect,Canvas);
-    Result := TCellInsider.SVGTagWrap(Result, Rect);
+
+    if Assigned (Canvas) then
+    begin
+      Canvas.Brush.Style:=bsClear;
+      Canvas.TextRect(Rect,Rect.Left+1,Rect.Top+1,Text);
+    end;
+    TextRectCanvas := TTextRectCanvas.Create(Text, Rect, Canvas);
+    Result := TCellInsider.PolygonFragmentToSVG( TextRectCanvas, Result);
   finally
-    TCellInsider.RestoreCanvasPenBrush(OriginalCanvasSettings, Canvas);
+    if Assigned(Canvas) then
+        TCellInsider.RestoreCanvasPenBrush(OriginalCanvasSettings, Canvas);
   end;
 
 end;
@@ -644,6 +722,15 @@ begin
                        + '(%d %d) (%d %d) (%d %d) (%d %d)',
                          [xa,ya,xb,yb,xc,yc,xd,yd])
                           );
+end;
+
+{ TTextRectCanvas }
+
+constructor TTextRectCanvas.Create(Text: string; Rect: TRect; Canvas: TCanvas);
+begin
+   Self.text := Text;
+   Self.Rect := Rect;
+   Self.Canvas := Canvas;
 end;
 
 end.

@@ -34,16 +34,18 @@ type
     FShowNeighborhood: boolean;
     FBandWidth:integer;
     FBandShift: integer;
-    FVarColors: Variant;
+    FColorList: IList<TColor>;
     function GetBandwidth(): integer;
     procedure SetBandwidth(Value: integer);
     procedure FillImage(BandWidth, BandShift: integer);
     function ColorNaming(clr: Tcolor): string;
     procedure DisplayUnusedCases(SVGFragment: string);
+
   protected
-    function ListOfUsedPolygonCases: IList<integer>;
     function GetSVGFragment: string;
-    procedure SetTestDim(const ImgX, ImgY, bandWidth, bandShift: integer;  toDisplayNeighborhood: boolean);
+    procedure SetTestDimWithoutWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
+    procedure SetSingleCellWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
+    procedure SetTestDimWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
     function PerimeterTop:string;
     function PerimeterBottom: string;
     procedure Teardown;
@@ -60,14 +62,6 @@ implementation
 uses
   ClrBand;
 {$R *.dfm}
-
-type
-  TSVGTestHelper = class helper for TForm1
-  private
-    function InitializeFullSetOfCases: IList<integer>;
-    function ExtractUsedCasesFromSVG(SVG: string): IList<integer>;
-    function ExtractListOfCommentsFromSVG(SVG: string): IList<string>;
-  end;
 
 
 procedure TForm1.FillImage(BandWidth, BandShift: integer);
@@ -89,6 +83,7 @@ begin
     B.Canvas.Brush.Color:=clwindow;
     B.Canvas.Brush.Style:=bsSolid;
     B.Canvas.FillRect(Rect(0,0, B.Width - 1, B.Height - 1));
+    Application.ProcessMessages;
 
     if ShowNeighborhood then
       R := Rect(B.Width div 5, B.Height div 5, (B.Width * 4 div 5), (B. Height * 4) div 5)
@@ -96,10 +91,8 @@ begin
       R := Rect(0,0, B.Width - 1, B. Height - 1);
     a := TStringlist.Create;
     try
-      ColorList :=  TCollections.CreateList<TColor>;
-      ColorList.Add(clRed);
-      ColorList.Add(clLime);
-      FSVGFragment := ClrBand.ColorBandsOfListMovable(B.Canvas,R, ColorList, BandWidth, Trackbar2.Position, '  A some text');
+      FSVGFragment := ClrBand.ColorBandsOfListMovable(B.Canvas,R, FColorList, BandWidth, BandShift, '  A some text');
+      {
       a.CommaText := FSVGFragment;
       sCases := Label2.Caption;
       for i := 0 to a.Count - 1 do
@@ -111,6 +104,7 @@ begin
                      Length(',' + a[i + 1] + ',') - 1
                     );
       Label2.Caption := sCases;
+      }
     finally
       a.Free;
     end;
@@ -140,9 +134,9 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-   FVarColors := VarArrayCreate([0,1], varInteger);
-   FVarColors[0] := clRed;
-   fVarColors[1] := clLime;
+   FColorList := Tcollections.CreateList<TColor>;
+   FColorList.Add(clRed);
+   FColorList.Add(clLime);
    TrackBar1.Position := 32;
    Label2.Caption := ',1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,';
    FBandShift := 0;
@@ -191,10 +185,44 @@ begin
   end;
 end;
 
-procedure TForm1.SetTestDim(const ImgX, ImgY, bandWidth, bandShift: integer;  toDisplayNeighborhood: boolean);
+procedure TForm1.SetTestDimWithoutWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
 begin
+   Self.Hide;
+   FColorList.Clear;
+   FColorList.Add(clLime);
+   FcolorList.Add(clRed);
    SetBandwidth(bandWidth);
-   self.ShowNeighborhood := toDisplayNeighborhood;
+   self.ShowNeighborhood := False;
+   self.SetBounds(Left, Top, ImgX + 16, ImgY + 239);
+   Self.Show;
+   Application.ProcessMessages;
+   Sleep(1000);
+   Application.ProcessMessages;
+end;
+
+procedure TForm1.SetTestDimWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
+begin
+   Self.Hide;
+   FColorList.Clear;
+   FColorList.Add(clLime);
+   FcolorList.Add(clRed);
+   SetBandwidth(bandWidth);
+   self.ShowNeighborhood := True;
+   self.SetBounds(Left, Top, ImgX + 16, ImgY + 239);
+   Self.Show;
+   Application.ProcessMessages;
+   Sleep(1000);
+   Application.ProcessMessages;
+end;
+
+procedure TForm1.SetSingleCellWhiteBorder(const ImgX, ImgY, bandWidth,
+  bandShift: integer);
+begin
+   Self.Hide;
+   FColorList.Clear;
+   FColorList.Add(clBlue);
+   SetBandwidth(bandWidth);
+   self.ShowNeighborhood := True;
    self.SetBounds(Left, Top, ImgX + 16, ImgY + 239);
    Self.Show;
    Application.ProcessMessages;
@@ -240,12 +268,6 @@ begin
   Result := FSVGFragment;
 end;
 
-
-function TForm1.ListOfUsedPolygonCases: IList<integer>;
-begin
-  Result := TCollections.CreateList<integer>;
-end;
-
 procedure TForm1.SetBandwidth(Value: integer);
 begin
   TrackBar1.OnChange := nil;
@@ -253,6 +275,7 @@ begin
   FBandWidth := Value;
   TrackBar1.OnChange := TrackBar1Change;
 end;
+
 
 procedure TForm1.Teardown;
 begin
@@ -282,50 +305,6 @@ begin
   BitBtn1.Left := (Self.ClientWidth - BitBtn1.Width ) div 2;
   Label1.Left := (Self.ClientWidth  - Label1.Width ) div 2;
   FillImage(GetBandwidth, FBandShift);
-end;
-
-
-
-{ TSVGTestHelper }
-
-function TSVGTestHelper.ExtractUsedCasesFromSVG(
-  SVG: string): IList<integer>;
-var
- ExtractedSVGComments: IList<string>;
-begin
-
-end;
-
-function TSVGTestHelper.ExtractListOfCommentsFromSVG(SVG: string): IList<string>;
-var
-  CommentHeadPlace, CommentTailPlace: integer;
-  SVGComments: IList<string>;
-begin
-   CommentHeadPlace := 1;
-   Result := TCollections.CreateList<string>;
-   while CommentHeadPlace > 0 do
-   begin
-     CommentHeadPlace := Posex('<!--', SVG, CommentHeadPlace);
-     if CommentHeadPlace > 0 then
-     begin
-       CommentTailPlace := Posex('-->', SVG, CommentHeadPlace);
-       if CommentTailPlace >0 then
-          Result.Add(Copy(SVG,
-                          CommentHeadPlace + Length('<!--'),
-                          CommentTailPlace
-                          )
-                    );
-     end;
-   end;
-end;
-
-function TSVGTestHelper.InitializeFullSetOfCases: IList<integer>;
-var
-  i: integer;
-begin
-   Result := TCollections.CreateList<integer>;
-   for i := 1 to 16 do
-      Result.Add(i);
 end;
 
 end.

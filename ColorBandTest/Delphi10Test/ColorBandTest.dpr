@@ -14,7 +14,8 @@ uses
   DUnitX.TestFramework,
   ColorBandTestUnit in 'ColorBandTestUnit.pas',
   ClrBand in '..\..\ClrBand.pas',
-  ClrBandInterface in '..\ClrBandInterface.pas';
+  ClrBandInterface in '..\ClrBandInterface.pas',
+  AutomatedTestCanvasAid in 'AutomatedTestCanvasAid.pas';
 
 var
   runner : ITestRunner;
