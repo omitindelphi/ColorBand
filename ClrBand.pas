@@ -218,14 +218,14 @@ type
 
   class function TCanvasPolygon.GenerateVertexCase03(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
-    iterator: integer;
-    R: TRect;
-  begin
-    Result.PolygonCase := 3;
-    iterator := Band.xd - Cell.Left;
-    R := Cell;
-    with Band do
-    begin
+    iterator: integer;                                   //
+    R: TRect;                                            //   .
+  begin                                                  //   |\
+    Result.PolygonCase := 3;                             //   | \
+    iterator := Band.xd - Cell.Left;                     //   |  \
+    R := Cell;                                           //   |   \
+    with Band do                                         //   |    \
+    begin                                                //   |____|
       SetLength(Result.Vertexes, 4);
       Result.Vertexes[0].X:= R.Left; Result.Vertexes[0].Y:= R.Bottom;
       Result.Vertexes[1].X:= R.Left; Result.Vertexes[1].Y:= R.Bottom + iterator - BandWidth;
@@ -414,12 +414,12 @@ type
     Result.PolygonCase := 14;
     R := Cell;
     with Band do
-    begin
-      Setlength(Result.Vertexes,6);
-      Result.Vertexes[0] := Point(R.Left, R.Top + (R.Left - xa) );
-      Result.Vertexes[1] := Point(R.Left,R.Top);
-      Result.Vertexes[2] := Point(Xb,R.Top);
-      Result.Vertexes[3] := Point(R.Right, R.Top + (R.Right - xb) );
+    begin                                                           //   __
+      Setlength(Result.Vertexes,6);                                 //  |  \
+      Result.Vertexes[0] := Point(R.Left, R.Top + (R.Left - xa) );  //  |   \
+      Result.Vertexes[1] := Point(R.Left,R.Top);                    //   \   \
+      Result.Vertexes[2] := Point(Xb,R.Top);                        //    \   |
+      Result.Vertexes[3] := Point(R.Right, R.Top + (R.Right - xb) );//     \__|
       Result.Vertexes[4] := Point(R.Right,R.Bottom);
       Result.Vertexes[5] := Point(xd, R.Bottom);
     end;
@@ -434,10 +434,10 @@ type
     with Band do
     begin
       SetLength(Result.Vertexes,4);
-      Result.Vertexes[0]:=Point(R.Left,R.Bottom);
-      Result.Vertexes[1]:=Point(R.Left,R.Top);
-      Result.Vertexes[2]:=Point(R.Right,R.Top);
-      Result.Vertexes[3]:=Point(R.Right,R.Bottom);
+      Result.Vertexes[0]:=Point(R.Left,R.Bottom);        //    ______
+      Result.Vertexes[1]:=Point(R.Left,R.Top);           //   |      |
+      Result.Vertexes[2]:=Point(R.Right,R.Top);          //   |      |
+      Result.Vertexes[3]:=Point(R.Right,R.Bottom);       //   |______|
     end;
   end;
 

@@ -17,31 +17,31 @@ type
     FClrBand: IBandFill;
     procedure SubtractUsedPolygonKinds(CasesUnUsedYet: IList<integer>; Width,
       Height: integer);
+    function ListToStr(Value: IList<integer>): string;
   public
     [Setup]
     procedure Setup;
     [TearDown]
     procedure TearDown;
-     //[Test]
-     //[TestCase('Test-W240-H319-BW102', '319, 240, 102, 0')]
+     [Test]
+     [TestCase('Test-W240-H319-BW102', '319, 240, 102, 0')]
      procedure TestForCorrectBandsWithinDeclaredRect(Width, Height, BandWidth, BandShift:integer);
 
 
      [Test]
-//     [TestCase('Test-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
-//     [TestCase('Test-W215-H415-BW273-Neighborhood', '215, 489, 273, 0')]
-//     [TestCase('Test-W184-H801-BW223-Neighborhood', '184, 801, 223, 0')]
+     [TestCase('Test-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
+     [TestCase('Test-W215-H415-BW273-Neighborhood', '215, 489, 273, 0')]
+     [TestCase('Test-W184-H801-BW223-Neighborhood', '184, 801, 223, 0')]
      [TestCase('Test-W184-H801-BW223-Neighbor+shift', '184, 801, 223, 90')]
-//     [TestCase('Test-W184-H801-BW223-Neighbor-shift', '184, 801, 223, -90')]
+     [TestCase('Test-W184-H801-BW223-Neighbor-shift', '184, 801, 223, -90')]
      procedure TestForColorBandsStayContainedWithinRect(Width, Height, BandWidth, BandShift: integer);
 
-     //[Test]
-     //[TestCase('Test-SVG-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
+     [Test]
+     [TestCase('Test-SVG-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
      procedure TestForSVGOutputPresence(Width, Height, BandWidth, BandShift: integer);
 
-     //[Test]
+     [Test]
      procedure TestForPolygonKindsCoverage;
-
   end;
 
 implementation
@@ -120,10 +120,15 @@ begin
 
   SubtractUsedPolygonKinds(CasesUnUsedYet, 319, 240);
 
- // SubtractUsedPolygonKinds(CasesUnUsedYet, 215, 489);
+  SubtractUsedPolygonKinds(CasesUnUsedYet, 215, 489);
 
-  //SubtractUsedcases(CasesUnUsedYet, 319, 50);
+  SubtractUsedPolygonKinds(CasesUnUsedYet, 319, 50);
 
+  SubtractUsedPolygonKinds(CasesUnUsedYet, 48, 150);
+
+  SubtractUsedPolygonKinds(CasesUnUsedYet, 75, 75);
+
+  SubtractUsedPolygonKinds(CasesUnUsedYet, 30, 30);
 
   ListOfUnTestedCases := CasesUnUsedYet.Where(function(const CaseNumberStored: integer): boolean
                                               begin
@@ -131,7 +136,7 @@ begin
                                               end
                                               );
   Assert.IsTrue(ListOfUnTestedCases.Count = 0, 'Not all polygon configurations tested: '
-                                             + IntToStr(ListOfUnTestedCases.Count)
+                                             + ListToStr(CasesUnusedYet)
                                              + ' left yet'
                                              );
 end;
@@ -141,11 +146,25 @@ begin
   FClrBand := TAutomatedTestForm.Create(nil);
 end;
 
+
 procedure TColorBandTest.TearDown;
 begin
   FClrBand.Teardown;
 end;
 
+function TColorBandTest.ListToStr( Value: IList<integer>): string;
+var
+  i: integer;
+begin
+  Result := '';
+  for i := 0 to Value.Count - 1 do
+  begin
+    if Value[i] >= 0 then
+      Result := Result + IntToStr(Value[i]) + ',';
+  end;
+  if Length(Result) > 0 then
+    Result := Copy( Result, 1, Length(Result) - 1);
+end;
 
 initialization
   TDUnitX.RegisterTestFixture(TColorBandTest);
