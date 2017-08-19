@@ -21,7 +21,6 @@ type
     Label1: TLabel;
     TrackBar2: TTrackBar;
     CheckBox1: TCheckBox;
-    Label2: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure TrackBar1Change(Sender: TObject);
     procedure BitBtn1Click(Sender: TObject);
@@ -67,8 +66,6 @@ var
   B: TBitmap;
   R: TRect;
   a: TStringList;
-  i: integer;
-  sCases: string;
 begin
   Label1.Caption := 'BandW: ' + IntToStr(Bandwidth) +' Pos ' + IntToStr(trackBar1.Position)
   +' h ' + IntTostr(Image1.height) + ' w ' + intToStr(Image1.Width);
@@ -91,17 +88,6 @@ begin
       FSVGFragment := ColorBandsOfListMovable(B.Canvas,R, FColorList, BandWidth, BandShift, '  A some text');
 
       a.CommaText := FSVGFragment;
-      sCases := Label2.Caption;
-      for i := 0 to a.Count - 1 do
-        if CompareText(a[i], 'Case') = 0 then
-          if i< a.Count - 1 then
-            if Pos(',' + a[i + 1] + ',', sCases) > 0 then
-              System.Delete(sCases,
-                     Pos(',' + a[i + 1] + ',', sCases) + 1,
-                     Length(',' + a[i + 1] + ',') - 1
-                    );
-      Label2.Caption := sCases;
-
     finally
       a.Free;
     end;
@@ -122,7 +108,6 @@ begin
    FColorList.Add(clRed);
    FColorList.Add(clLime);
    TrackBar1.Position := 32;
-   Label2.Caption := ',1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,';
    FBandShift := 0;
 end;
 

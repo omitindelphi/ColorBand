@@ -81,10 +81,10 @@ end;
 class function TSVGTester.ExtractListOfCommentsFromSVG(SVG: string): IList<string>;
 var
   CommentHeadPlace, CommentTailPlace: integer;
-  SVGComments: IList<string>;
   CommentLength: integer;
   CommentStart: integer;
 begin
+   CommentStart := 0;
    CommentHeadPlace := 1;
    Result := TCollections.CreateList<string>;
    while CommentHeadPlace > 0 do

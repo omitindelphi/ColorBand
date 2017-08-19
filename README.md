@@ -17,13 +17,19 @@ using
 
   SVG: string;
   
+  // how to put color strips on canvas
+  
   SVG := ColorBandsOfListMovable(	Canvas, 
 									Rect(Cell.Left, Cell.Top, Cell.Right, Cell.Bottom), 
 									ColorList, BandWidth, BandShift, 'A some text'
 								);
   
+Bandwidth - it is width of single colored cell;
+BandShift - it is shift of colored pattern by X axis.
 
-Used Spring4Delphi framework for collection handling, and testing is done using DunitX framework; 
+Function returns SVG presentation of colored rectangle, with comments.
+
+Used Spring4Delphi framework for collection handling ( I like interfaced collections) , and testing is done using DunitX framework; 
 
 
 https://bitbucket.org/sglienke/spring4d

@@ -31,7 +31,6 @@ type
      [TestCase('test for correct band shifting','0')]
      [TestCase('test for correct band shifting','30')]
      [TestCase('test for correct band shifting','-30')]
-
      procedure TestForCorrectShift(BandShift:integer);
 
      [Test]
@@ -40,19 +39,17 @@ type
 
 
      [Test]
-     [TestCase('Test-W240-H319-BW102-Neighborhood', '217, 216, 431, 123')]
-
-     [TestCase('Test-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
-     [TestCase('Test-W215-H415-BW273-Neighborhood', '215, 489, 273, 0')]
+     [TestCase('Test-W184-H473-BW256-Shift+119 Neighborhood', '184, 473, 256, 139')]
+     [TestCase('Test-W217-H216-BW431-Shift+123 Neighborhood', '217, 216, 431, 123')]
+     [TestCase('Test-W319-H240-BW102-Neighborhood', '319, 240, 102, 0')]
+     [TestCase('Test-W215-H489-BW273-Neighborhood', '215, 489, 273, 0')]
      [TestCase('Test-W184-H801-BW223-Neighborhood', '184, 801, 223, 0')]
      [TestCase('Test-W184-H801-BW223-Neighbor+shift', '184, 801, 223, 90')]
      [TestCase('Test-W184-H801-BW223-Neighbor-shift', '184, 801, 223, -90')]
-
      procedure TestForColorBandsStayContainedWithinRect(Width, Height, BandWidth, BandShift: integer);
 
      [Test]
      [TestCase('Test-SVG-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
-
      procedure TestForSVGOutputPresence(Width, Height, BandWidth, BandShift: integer);
 
      [Test]
