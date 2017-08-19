@@ -15,9 +15,9 @@ type
     KillerTimer: TTimer;
     procedure KillerTimerTimer(Sender: TObject);
     procedure FormPaint(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
-//    FWhiteBorderWidth: integer;
     FSVGCallBack: TSVGCallback;
     FCellInfo: TCellDescription;
     procedure AlignBorders;
@@ -55,7 +55,7 @@ begin
   FSVGCallBack := SVGCallBack;
   FCellInfo := CellDescription;
   AlignBorders;
-//  KillerTimer.Enabled := True;
+  KillerTimer.Enabled := True;
   Self.OnPaint := FormPaint;
   Self.Show;
 end;
@@ -101,6 +101,19 @@ begin
      KillerTimer.Enabled
   then
     FSVGCallBack(SVGReturn);
+end;
+
+procedure TDisplayCellForm.FormCreate(Sender: TObject);
+begin
+  FCellInfo.Rect := Rect(0,0,1,1);
+  with FCellInfo do
+  begin
+    Text := '';
+    Colors := nil;
+    BandWidth := 0;
+    Bandshift := 0;
+    WhiteBorderWidth := 0;
+  end;
 end;
 
 procedure TDisplayCellForm.FormPaint(Sender: TObject);

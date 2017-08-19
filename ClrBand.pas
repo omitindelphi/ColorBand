@@ -1,3 +1,18 @@
+///////////////////////////////////////////////////////////////////////////////
+//                                                                           //
+//    Function to draw color slanted stripes in cell on canvas               //
+//      and place text over them with default canvas settings                //
+//    Returns SVG presentation of the cell                                   //
+//                                                                           //
+//    Simple to see and interesting to get it working and test               //
+//                                                                           //
+//     Free for commercial and non-commercial use                            //
+//                                                                           //
+//     Designed by Oleg Mitin, 1998 - 2017                                   //
+//     https://github.com/omitindelphi                                       //
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
 unit ClrBand;
 
 interface
@@ -30,6 +45,16 @@ type
     PenMode: TPenMode;
     BrushColor: TColor;
     BrushStyle: TBrushStyle;
+  end;
+
+  TLocalCellDescriptor = record
+    Text:string;
+    Rect: TRect;
+    Colors: IList<TColor>;
+    BandWidth: integer;
+    Bandshift: integer;
+    Canvas: TCanvas;
+    R: TRect;
   end;
 
   TParallelogram = record
@@ -69,7 +94,6 @@ type
     procedure Draw(Canvas: TCanvas);
   end;
 
-
   TCrossGeneratorFunction = function(Cell: TRect; Band: TParallelogram):TVertexesCase of object;
 
   TCanvasPolygon = class(TInterfacedObject, SerializablePolygon)
@@ -95,6 +119,8 @@ type
     class function GenerateVertexCase14(Cell:TRect; Band: Tparallelogram): TVertexesCase;
     class function GenerateVertexCase15(Cell:TRect; Band: Tparallelogram): TVertexesCase;
     class function GenerateVertexCase16(Cell:TRect; Band: Tparallelogram): TVertexesCase;
+    class function GenerateVertexCase17(Cell: TRect;Band: Tparallelogram): TVertexesCase;
+    class function GenerateVertexCase18(Cell: TRect;Band: Tparallelogram): TVertexesCase;
    public
     constructor CreateAsCellToCrossParallelogram(Cell:TRect; Band: TParallelogram; ColorFill: TColor);
     constructor CreateAsSingleColorRect(Cell: TRect; ColorToFill: Tcolor);
@@ -119,11 +145,18 @@ type
   private
     class function ColorToRGBString(Color: TColor): string; static;
     class function SVGTagWrap(SVGFragment: string; Rect: TRect): string; static;
-    class function PolygonFragmentToSVG(TextRectCanvas: TTextRectCanvas; PolygonFragmentSVG: string): string; static;
+    class function PolygonFragmentToSVG(TextRectCanvas: TLocalCellDescriptor; PolygonFragmentSVG: string): string; static;
     class function StoreCanvasPenBrush(Canvas: TCanvas): GraphicStorage; static;
     class procedure RestoreCanvasPenBrush(Storage: GraphicStorage; Canvas: TCanvas);
-    class function TextToSVGFragment(TextRectCanvas: TTextRectCanvas): string; static;
-    class function GetDefaultFontName: string;
+    class function TextToSVGFragment(TextRectCanvas: TLocalCellDescriptor): string; static;
+    class function GetDefaultFontName: string; static;
+    class function NormalizeBandWidth(BandWidth: integer): integer; static;
+    class function NormalizeBandshift(CellDescriptor: TLocalCellDescriptor): integer; static;
+    class function DrawSingleCellForSingleColor(
+      CellDescriptor: TLocalCellDescriptor): string; static;
+    class procedure ClearCellCanvas(CellDescriptor: TLocalCellDescriptor); static;
+    class function InitializeXIterator(
+      CellDescriptor: TlocalCelldescriptor): integer; static;
   end;
 
   function TCanvasPolygon.PolygonCase: integer;
@@ -165,12 +198,16 @@ type
         begin Result := GenerateVertexCase12;  Exit; end;
       if (xa<= R.Right)and(xa> R.Left)and(Xb> R.Right)and(xd<= R.Right) then // 4-angle :13
         begin Result := GenerateVertexCase13;  Exit; end;
-      if (xa<= R.Left)and(xb> R.Left)and(Xb<= R.Right)and(xd<= R.Right)and(xc> R.Right) then // 6-angle :14
+      if (xa<= R.Left)and(xb> R.Left)and(Xb<= R.Right)and(xd<= R.Right)and(xc> R.Right) and (xd > R.Left)then // 6-angle :14
         begin Result := GenerateVertexCase14;  Exit; end;
       if (xd<= R.Left)and(xb> R.Right) then // 4-angle Rect :15
         begin Result := GenerateVertexCase15;  Exit; end;
-      if ((xa<=R.left)and(xb>=R.right)) then  // 4-angle : 16
+      if (xa<=R.left)and(xb>=R.right) and (xd > R.Right) then  // 4-angle : 16
         begin Result := GenerateVertexCase16;  Exit; end;
+      if (xa<= R.Left)and(xb> R.Left)and(Xb<= R.Right)and(xd<= R.Right)and(xc> R.Right) and (xd <= R.Left)then // 5-angle :17
+        begin Result := GenerateVertexCase17;  Exit; end;
+      if (xa<=R.left)and(xb>=R.right) and (xd <= R.Right) then  // 5-angle : 18
+        begin Result := GenerateVertexCase18;  Exit; end;
     end;
   end;
 
@@ -189,11 +226,11 @@ type
   class function TCanvasPolygon.GenerateVertexCase01(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
     iterator: integer;
-  begin
-    Result.PolygonCase := 1;
-    iterator := Band.xd - Cell.Left;
-    SetLength(Result.Vertexes, 3);
-    Result.Vertexes[0].X:= Cell.Left; Result.Vertexes[0].Y:= Cell.Bottom;
+  begin                                                                        //  |\
+      Result.PolygonCase := 1;                                                 //  | |
+    iterator := Band.xd - Cell.Left;                                           //  |  \
+    SetLength(Result.Vertexes, 3);                                             //  |   \
+    Result.Vertexes[0].X:= Cell.Left; Result.Vertexes[0].Y:= Cell.Bottom;      //  |____\
     Result.Vertexes[1].X:= Cell.Left; Result.Vertexes[1].Y:= Cell.Bottom - iterator - Band.BandWidth;
     Result.Vertexes[2].X:= Cell.Left + iterator + band.BandWidth; Result.Vertexes[2].Y:= Cell.Bottom;
   end;
@@ -201,14 +238,14 @@ type
   class function TCanvasPolygon.GenerateVertexCase02(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
     iterator: integer;
-    R: TRect;
-  begin
-    Result.PolygonCase := 2;
-    iterator := Band.xd - Cell.Left;
-    R := Cell;
-    with Band do
-    begin
-      SetLength(Result.Vertexes, 4);
+    R: TRect;                                                                //   |
+  begin                                                                      //   |\
+    Result.PolygonCase := 2;                                                 //   | \
+    iterator := Band.xd - Cell.Left;                                         //   |  \
+    R := Cell;                                                               //   \   \
+    with Band do                                                             //    \   \
+    begin                                                                    //     \___\
+      SetLength(Result.Vertexes, 4);                                         //
       Result.Vertexes[0].X:=xd; Result.Vertexes[0].Y:=R.Bottom;
       Result.Vertexes[1].X:=R.Left; Result.Vertexes[1].Y:=R.Bottom-iterator;
       Result.Vertexes[2].X:=R.Left; Result.Vertexes[2].Y:=R.Bottom-iterator-BandWidth;
@@ -239,11 +276,11 @@ type
     iterator: integer;
     R: TRect;
   begin
-    Result.PolygonCase := 4;
-    iterator := Band.xd - Cell.Left;
-    R := Cell;
-    with Band do
-    begin
+    Result.PolygonCase := 4;                //     |
+    iterator := Band.xd - Cell.Left;        //     |\
+    R := Cell;                              //     | \
+    with Band do                            //     \  \
+    begin                                   //      \__|
       Setlength(Result.Vertexes,5);
       Result.Vertexes[0].X:=xd; Result.Vertexes[0].Y:= R.Bottom;
       Result.Vertexes[1].X:= R.Left; Result.Vertexes[1].Y:= R.Bottom - iterator;
@@ -273,12 +310,12 @@ type
 
   class function TCanvasPolygon.GenerateVertexCase06(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
-    R: TRect;
-  begin
-    Result.PolygonCase := 6;
-    R := Cell;
-    with Band do
-    begin
+    R: TRect;                        //  _
+  begin                              // | \
+    Result.PolygonCase := 6;         // |  |
+    R := Cell;                       //  \ |
+    with Band do                     //   \|
+    begin                            //    |
       SetLength(Result.Vertexes,5);
       Result.Vertexes[0].X:=R.Right; Result.Vertexes[0].Y:= R.Bottom - (xd - R.Right);
       Result.Vertexes[1].X:= R.Left; Result.Vertexes[1].Y:=R.Top + (R.Left - xa);
@@ -306,13 +343,13 @@ type
 
   class function TCanvasPolygon.GenerateVertexCase08(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
-    iterator: integer;
-    R: TRect;
-  begin
-    Result.PolygonCase := 8;
-    iterator := Band.xd - Cell.Left;
-    R := Cell;
-    with Band do
+    iterator: integer;                     //
+    R: TRect;                              //
+  begin                                    //     _____
+    Result.PolygonCase := 8;               //     \    \
+    iterator := Band.xd - Cell.Left;       //      \    \
+    R := Cell;                             //       \    |
+    with Band do                           //        \___|
     begin
       SetLength(Result.Vertexes,5);
       Result.Vertexes[0].X := xd;      Result.Vertexes[0].Y := R.Bottom;
@@ -346,12 +383,12 @@ type
     iterator: integer;
     R: TRect;
   begin
-    Result.PolygonCase := 10;
-    iterator := Band.xd - Cell.Left;
-    R := Cell;
-    with Band do
-    begin
-      SetLength(Result.Vertexes,3);
+    Result.PolygonCase := 10;                              //  ____
+    iterator := Band.xd - Cell.Left;                       //  \   |
+    R := Cell;                                             //   \  |
+    with Band do                                           //    \ |
+    begin                                                  //     \|
+      SetLength(Result.Vertexes,3);                        //      |
       Result.Vertexes[0].X := R.Right; Result.Vertexes[0].Y := R.Bottom - iterator + Cell.Width;
       Result.Vertexes[1].X :=xa;       Result.Vertexes[1].Y := R.Top;
       Result.Vertexes[2] := Point(R.Right,R.Top);
@@ -359,13 +396,13 @@ type
   end;
 
   class function TCanvasPolygon.GenerateVertexCase11(Cell:TRect; Band: Tparallelogram): TVertexesCase;
-  var
-    R: TRect;
-  begin
-    Result.PolygonCase := 11;
-    R := Cell;
-    with Band do
-    begin
+  var                                        //    ____
+    R: TRect;                                //   |    \
+  begin                                      //   |     \
+    Result.PolygonCase := 11;                //    \     \
+    R := Cell;                               //     \_____\
+    with Band do                             //
+    begin                                    //
       SetLength(Result.Vertexes,5);
       Result.Vertexes[0].x :=xd;		   Result.Vertexes[0].y := R.bottom;
       Result.Vertexes[1].x :=R.Left;  Result.Vertexes[1].y := R.top + (R.Left - xa);
@@ -407,6 +444,15 @@ type
     end;
   end;
 
+  function PlaceVertexIntoRect(Point: TPoint; Rect: TRect): TPoint;
+  begin
+    Result := Point;
+    if Result.X < Rect.Left then Result.X := Rect.Left;
+    if Result.X > Rect.Right then Result.X := Rect.Right;
+    if Result.Y > Rect.Bottom then Result.Y := Rect.Bottom;
+    if Result.Y < Rect.Top then Result.Y := Rect.Top;
+  end;
+
   class function TCanvasPolygon.GenerateVertexCase14(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
     R: TRect;
@@ -444,18 +490,54 @@ type
   class function TCanvasPolygon.GenerateVertexCase16(Cell:TRect; Band: Tparallelogram): TVertexesCase;
   var
     iterator: integer;
-    R: TRect;
-  begin
-    Result.PolygonCase := 16;
-    iterator := Band.xd - Cell.Left;
-    R := Cell;
-    with Band do
-    begin
+    R: TRect;                             //    ___
+  begin                                   //   |   |
+    Result.PolygonCase := 16;             //   |   |
+    iterator := Band.xd - Cell.Left;      //    \  |
+    R := Cell;                            //     \ |
+    with Band do                          //      \|
+    begin                                 //       |
       SetLength(Result.Vertexes,4);
       Result.Vertexes[0].x:=R.left;		Result.Vertexes[0].y:=R.bottom - iterator;
       Result.Vertexes[1].x:=R.left;		Result.Vertexes[1].y:=R.top;
       Result.Vertexes[2].x:=R.right;	  Result.Vertexes[2].y:=R.top;
       Result.Vertexes[3].x:=R.right;	  Result.Vertexes[3].y:=R.bottom - iterator + Cell.Width;
+    end;
+  end;
+
+  class function TCanvasPolygon.GenerateVertexCase17(Cell:TRect; Band: Tparallelogram): TVertexesCase;
+  var
+    R: TRect;
+  begin
+    Result.PolygonCase := 17;
+    R := Cell;
+    with Band do
+    begin                                                           //   __
+      Setlength(Result.Vertexes,5);                                 //  |  \
+      Result.Vertexes[0] := Point(R.Left,R.Bottom);                 //  |   \
+      Result.Vertexes[1] := Point(R.Left,R.Top);                    //  |    \
+      Result.Vertexes[2] := Point(Xb,R.Top);                        //  |     |
+      Result.Vertexes[3] := Point(R.Right, R.Top + (R.Right - xb) );//  |_____|
+      Result.Vertexes[4] := Point(R.Right,R.Bottom);
+    end;
+  end;
+
+  class function TCanvasPolygon.GenerateVertexCase18(Cell:TRect; Band: Tparallelogram): TVertexesCase;
+  var
+    iterator: integer;
+    R: TRect;                             //    ___
+  begin                                   //   |   |
+    Result.PolygonCase := 18;             //   |   |
+    iterator := Band.xd - Cell.Left;      //    \  |
+    R := Cell;                            //     \_|
+    with Band do
+    begin
+      SetLength(Result.Vertexes,5);
+      Result.Vertexes[0].x := R.left;		Result.Vertexes[0].y :=R.bottom - iterator;
+      Result.Vertexes[1].x := R.left;		Result.Vertexes[1].y :=R.top;
+      Result.Vertexes[2].x := R.right;	  Result.Vertexes[2].y :=R.top;
+      Result.Vertexes[3].x := R.right;	  Result.Vertexes[3].y :=R.bottom;
+      Result.Vertexes[4].x := Band.xd;	  Result.Vertexes[4].y := R.bottom;
     end;
   end;
 
@@ -511,7 +593,7 @@ var
     Result := AnsiQuotedStr(Result, '"');
 end;
 
-class function TCellInsider.TextToSVGFragment(TextRectCanvas: TTextRectCanvas): string;
+class function TCellInsider.TextToSVGFragment(TextRectCanvas: TLocalCellDescriptor): string;
 // Example:   <text x="10" y="40"
 //                 style="font-family: Times New Roman;
 //                       font-size: 44px; stroke: #00ff00; fill: #0000ff;">
@@ -557,6 +639,17 @@ begin
            +'</svg>'+ #13#10;
 end;
 
+class procedure TCellInsider.ClearCellCanvas(
+  CellDescriptor: TLocalCellDescriptor);
+begin
+    if Assigned(CellDescriptor.Canvas) then
+    begin
+      CellDescriptor.Canvas.Brush.Color:=clwindow;
+      CellDescriptor.Canvas.Brush.Style := bsSolid;
+      CellDescriptor.Canvas.FillRect(CellDescriptor.Rect);
+    end;
+end;
+
 class function TCellInsider.ColorToRGBString(Color: TColor): string;
 begin
   Result := Format('rgb(%d ,%d, %d)',
@@ -600,6 +693,20 @@ begin
   Canvas.Brush.Style := Storage.BrushStyle ;
 end;
 
+class function TCellInsider.DrawSingleCellForSingleColor(CellDescriptor: TLocalCellDescriptor): string;
+var
+  Polygon: SerializablePolygon;
+begin
+  Polygon := TCanvasPolygon.CreateAsSingleColorRect(CellDescriptor.Rect,CellDescriptor.Colors.Items[0]);
+  Polygon.Draw(CellDescriptor.Canvas);
+  CellDescriptor.Canvas.TextRect(CellDescriptor.Rect,
+                                  CellDescriptor.Rect.Left+1,
+                                  CellDescriptor.Rect.Top+1,
+                                  CellDescriptor.Text);
+  Result := Polygon.SerializeAsSVGFragment();
+  Result := TCellInsider.PolygonFragmentToSVG( CellDescriptor, Result);
+end;
+
 class function TCellInsider.GetDefaultFontName: string;
 var B: TBitmap;
 begin
@@ -613,7 +720,27 @@ begin
    end;
 end;
 
-class function TCellInsider.PolygonFragmentToSVG(TextRectCanvas: TTextRectCanvas; PolygonFragmentSVG: string): string;
+class function TCellInsider.NormalizeBandshift(CellDescriptor: TLocalCellDescriptor): integer;
+begin
+  Result := CellDescriptor.BandShift mod ( CellDescriptor.Colors.Count * Abs(CellDescriptor.BandWidth));
+end;
+
+class function TCellInsider.NormalizeBandWidth(BandWidth: integer): integer;
+begin
+  Result := Abs(BandWidth);
+  if Result <= 2 then
+     Result := 2;
+end;
+
+class function TCellInsider.InitializeXIterator(CellDescriptor: TlocalCelldescriptor): integer;
+begin
+    Result:= -(CellDescriptor.Bandwidth * CellDescriptor.Colors.Count) - CellDescriptor.BandShift ;
+
+    while Result > -(CellDescriptor.Bandwidth * CellDescriptor.Colors.Count) do
+      Result:= Result - (CellDescriptor.Bandwidth * CellDescriptor.Colors.Count);
+end;
+
+class function TCellInsider.PolygonFragmentToSVG(TextRectCanvas: TLocalCellDescriptor; PolygonFragmentSVG: string): string;
 var
   TempString: string;
 begin
@@ -632,44 +759,35 @@ var
   xIterator,ColorIterator,w,h,xa,xb,xc,xd:integer;
 
   R:TRect;
-  NormalizedBandShift: integer;
   OriginalCanvasSettings: GraphicStorage;
 
   Band: TParallelogram;
   Polygon: SerializablePolygon;
-
   TextRectCanvas: TTextRectCanvas;
+  CellDescriptor: TLocalCellDescriptor;
 begin
   Result := '';
   OriginalCanvasSettings := TCellInsider.StoreCanvasPenBrush(Canvas);
+
   try
+    CellDescriptor.Canvas := Canvas;
+    CellDescriptor.Text := Text;
+    CellDescriptor.Rect := Rect;
+    CellDescriptor.Colors := ColorList;
+    CellDescriptor.BandWidth := TCellInsider.NormalizeBandWidth(BandWidth);
+    CellDescriptor.BandShift := BandShift;
+    CellDescriptor.BandShift := TCellInsider.NormalizeBandshift(CellDescriptor);
 
-    if Bandwidth <= 2 then
-      Bandwidth := 2;
-
-    NormalizedBandShift := BandShift mod ( ColorList.Count * Abs(BandWidth));
-
-    if ColorList.Count=1 then
+    if ColorList.Count = 1 then
       begin
-          Polygon := TCanvasPolygon.CreateAsSingleColorRect(Rect,ColorList.Items[0]);
-          Polygon.Draw(Canvas);
-          Canvas.TextRect(Rect,Rect.Left+1,Rect.Top+1,Text);
-          Result := Polygon.SerializeAsSVGFragment();
-          Result := TCellInsider.PolygonFragmentToSVG( TTextRectCanvas.Create(Text, Rect, Canvas), Result);
-          Exit;
+        Result := TCellInsider.DrawSingleCellForSingleColor(CellDescriptor);
+        Exit;
       end;
 
-    if Assigned(Canvas) then
-    begin
-      Canvas.Brush.Color:=clwindow;
-      Canvas.FillRect(Rect);
-    end;
+   TCellInsider.ClearCellCanvas(CellDescriptor);
 
     ColorIterator := -1;
-    xIterator:= -(Bandwidth * ColorList.Count) - NormalizedBandShift ;
-
-    while xIterator > -(Bandwidth * ColorList.Count) do
-      xIterator:= xIterator - (Bandwidth * ColorList.Count);
+    xIterator := TcellInsider.InitializeXIterator(CellDescriptor);
 
     R:=Rect;
     R.Left:=Rect.Left+1;  R.Right:=Rect.Right-1;  R.Bottom:=Rect.Bottom-1;
@@ -704,7 +822,7 @@ begin
       Canvas.TextRect(Rect,Rect.Left+1,Rect.Top+1,Text);
     end;
     TextRectCanvas := TTextRectCanvas.Create(Text, Rect, Canvas);
-    Result := TCellInsider.PolygonFragmentToSVG( TextRectCanvas, Result);
+    Result := TCellInsider.PolygonFragmentToSVG( CellDescriptor, Result);
   finally
     if Assigned(Canvas) then
         TCellInsider.RestoreCanvasPenBrush(OriginalCanvasSettings, Canvas);

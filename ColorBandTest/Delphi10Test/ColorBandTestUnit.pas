@@ -7,6 +7,8 @@ uses
   ,Spring.Collections
   ,SysUtils
   ,ClrBandInterface
+  ,XML.XMLIntf
+  ,XMl.XMLdoc
   ;
 
 type
@@ -23,21 +25,34 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
+
+
+     [Test]
+     [TestCase('test for correct band shifting','0')]
+     [TestCase('test for correct band shifting','30')]
+     [TestCase('test for correct band shifting','-30')]
+
+     procedure TestForCorrectShift(BandShift:integer);
+
      [Test]
      [TestCase('Test-W240-H319-BW102', '319, 240, 102, 0')]
      procedure TestForCorrectBandsWithinDeclaredRect(Width, Height, BandWidth, BandShift:integer);
 
 
      [Test]
+     [TestCase('Test-W240-H319-BW102-Neighborhood', '217, 216, 431, 123')]
+
      [TestCase('Test-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
      [TestCase('Test-W215-H415-BW273-Neighborhood', '215, 489, 273, 0')]
      [TestCase('Test-W184-H801-BW223-Neighborhood', '184, 801, 223, 0')]
      [TestCase('Test-W184-H801-BW223-Neighbor+shift', '184, 801, 223, 90')]
      [TestCase('Test-W184-H801-BW223-Neighbor-shift', '184, 801, 223, -90')]
+
      procedure TestForColorBandsStayContainedWithinRect(Width, Height, BandWidth, BandShift: integer);
 
      [Test]
      [TestCase('Test-SVG-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
+
      procedure TestForSVGOutputPresence(Width, Height, BandWidth, BandShift: integer);
 
      [Test]
@@ -59,6 +74,47 @@ begin
   Assert.AreEqual(sTop, sBottom, 'Band border coordinates by top and bottom line do not match');
   Assert.IsTrue(Length(sTop) > 10, 'Descriptor of top border too short');
   Assert.IsTrue(Pos('Unknown', sTop) <= 0, 'There are empty bands on picture');
+end;
+
+procedure TColorBandTest.TestForCorrectShift(BandShift:integer);
+var
+  sBottom, SVG: string;
+  Doc: IXMLDocument;
+  NodesLevel1: IXMLNodeList;
+  PointsNode: IXMLNode;
+  AllPoints: string;
+  Vertexes: TArray<string>;
+  LastVertex: string;
+  LastPointXY: TArray<string>;
+  XPointOfSecondStrip: integer;
+  NormalizedBandShift: integer;
+  ExpectedBorderPosition: integer;
+begin
+  NormalizedBandShift := BandShift mod ( 50);
+
+  FClrBand.SetTestDimWithoutWhiteBorder(300, 300, 50, BandShift);
+  sBottom := FClrBand.PerimeterBottom;
+  SVG := FCLRBand.GetSVGFragment();
+
+  Doc := TXMLDocument.Create(nil);
+  Doc.LoadFromXML(AnsiString(SVG));
+  Doc.Active := True;
+  NodesLevel1 := Doc.DocumentElement.ChildNodes;
+  PointsNode := NodesLevel1.Nodes[0];
+  AllPoints := PointsNode.Attributes['points'];
+  Vertexes := AllPoints.Split([' ']);
+  Assert.IsTrue( Length(Vertexes) > 0, 'First SVG polygon has zero sizes');
+  LastVertex :=  Vertexes[Length(Vertexes) - 1];
+  LastPointXY := LastVertex.Split([',']);
+  XPointOfSecondStrip := StrToInt(LastPointXY[0]);
+  if BandShift >= 0 then
+    ExpectedBorderPosition := 50 - NormalizedBandShift + 1
+  else
+    ExpectedBorderPosition := - NormalizedBandShift + 1;
+
+
+  Assert.IsTrue(XPointOfSecondStrip = ExpectedBorderPosition,
+                'Misplaced position of second strip, shift ' + IntToStr(BandShift));
 
 end;
 
@@ -71,7 +127,6 @@ begin
   sBottom := FClrBand.PerimeterBottom;
   Assert.IsTrue(Length(sTop) = 0, 'There are color changes beyond left - top border of picture');
   Assert.IsTrue(Length(sBottom) = 0, 'There are color changes beyond bottom - right border of picture');
-
 end;
 
 procedure TColorBandTest.TestForSVGOutputPresence(Width, Height, BandWidth,
@@ -110,7 +165,8 @@ var
 begin
   SVGTester := TSVGTester.Create;
   CasesUnUsedYet := TCollections.CreateList<integer>;
-  CasesUnUsedYet.AddRange([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
+  CasesUnUsedYet.AddRange([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]);
+
 
   FClrBand.SetSingleCellWhiteBorder(319, 240, 102, 0);
   SVG := FClrBand.GetSVGFragment();
@@ -129,6 +185,18 @@ begin
   SubtractUsedPolygonKinds(CasesUnUsedYet, 75, 75);
 
   SubtractUsedPolygonKinds(CasesUnUsedYet, 30, 30);
+
+
+  FClrBand.SetTestDimWhiteBorder(217, 216, 431, -123);
+  SVG := FClrBand.GetSVGFragment();
+  CasesUsed := SVGTester.ExtractUsedPolygonKindsFromSVG(SVG);
+  SVGTester.SubtractUsedCases(CasesUnUsedYet, CasesUsed);
+
+
+  FClrBand.SetTestDimWhiteBorder(90, 90, 60, 0);
+  SVG := FClrBand.GetSVGFragment();
+  CasesUsed := SVGTester.ExtractUsedPolygonKindsFromSVG(SVG);
+  SVGTester.SubtractUsedCases(CasesUnUsedYet, CasesUsed);
 
   ListOfUnTestedCases := CasesUnUsedYet.Where(function(const CaseNumberStored: integer): boolean
                                               begin

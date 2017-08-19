@@ -11,6 +11,7 @@ object DisplayCellForm: TDisplayCellForm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnCreate = FormCreate
   OnPaint = FormPaint
   PixelsPerInch = 96
   TextHeight = 13

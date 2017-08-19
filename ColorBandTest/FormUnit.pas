@@ -39,8 +39,6 @@ type
     procedure SetBandwidth(Value: integer);
     procedure FillImage(BandWidth, BandShift: integer);
     function ColorNaming(clr: Tcolor): string;
-    procedure DisplayUnusedCases(SVGFragment: string);
-
   protected
     function GetSVGFragment: string;
     procedure SetTestDimWithoutWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
@@ -71,7 +69,6 @@ var
   a: TStringList;
   i: integer;
   sCases: string;
-  ColorList: IList<TColor>;
 begin
   Label1.Caption := 'BandW: ' + IntToStr(Bandwidth) +' Pos ' + IntToStr(trackBar1.Position)
   +' h ' + IntTostr(Image1.height) + ' w ' + intToStr(Image1.Width);
@@ -91,8 +88,8 @@ begin
       R := Rect(0,0, B.Width - 1, B. Height - 1);
     a := TStringlist.Create;
     try
-      FSVGFragment := ClrBand.ColorBandsOfListMovable(B.Canvas,R, FColorList, BandWidth, BandShift, '  A some text');
-      {
+      FSVGFragment := ColorBandsOfListMovable(B.Canvas,R, FColorList, BandWidth, BandShift, '  A some text');
+
       a.CommaText := FSVGFragment;
       sCases := Label2.Caption;
       for i := 0 to a.Count - 1 do
@@ -104,7 +101,7 @@ begin
                      Length(',' + a[i + 1] + ',') - 1
                     );
       Label2.Caption := sCases;
-      }
+
     finally
       a.Free;
     end;
@@ -114,23 +111,10 @@ begin
   end;
 end;
 
-procedure TForm1.DisplayUnusedCases( SVGFragment: string);
-var
-  FullCaseCollection: IList<integer>;
-  UsedCasecollection: IList<integer>;
-  i: integer;
-begin
-
-
-
-
-end;
-
 procedure TForm1.BitBtn1Click(Sender: TObject);
 begin
   FillImage( GetBandwidth, FBandShift);
 end;
-
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
@@ -297,7 +281,7 @@ end;
 procedure TForm1.TrackBar2Change(Sender: TObject);
 begin
   FBandShift := TrackBar2.Position;
-  TrackBar1Change(nil);
+  FillImage(FBandWidth, FBandShift);
 end;
 
 procedure TForm1.FormResize(Sender: TObject);
