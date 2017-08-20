@@ -1,0 +1,72 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{68D5BE51-47A7-4B40-9CDF-5B3725B66917}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="ColorBandVisualTest.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Delphi10Test\ColorBandTest.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Delphi10Test\AutomatedTest.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="..\ColorDatasetExample.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="ColorBandVisualTest">
+        <MSBuild Projects="ColorBandVisualTest.dproj"/>
+    </Target>
+    <Target Name="ColorBandVisualTest:Clean">
+        <MSBuild Projects="ColorBandVisualTest.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ColorBandVisualTest:Make">
+        <MSBuild Projects="ColorBandVisualTest.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ColorBandTest">
+        <MSBuild Projects="Delphi10Test\ColorBandTest.dproj"/>
+    </Target>
+    <Target Name="ColorBandTest:Clean">
+        <MSBuild Projects="Delphi10Test\ColorBandTest.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ColorBandTest:Make">
+        <MSBuild Projects="Delphi10Test\ColorBandTest.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="AutomatedTest">
+        <MSBuild Projects="Delphi10Test\AutomatedTest.dproj"/>
+    </Target>
+    <Target Name="AutomatedTest:Clean">
+        <MSBuild Projects="Delphi10Test\AutomatedTest.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="AutomatedTest:Make">
+        <MSBuild Projects="Delphi10Test\AutomatedTest.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ColorDatasetExample">
+        <MSBuild Projects="..\ColorDatasetExample.dproj"/>
+    </Target>
+    <Target Name="ColorDatasetExample:Clean">
+        <MSBuild Projects="..\ColorDatasetExample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ColorDatasetExample:Make">
+        <MSBuild Projects="..\ColorDatasetExample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="ColorBandVisualTest;ColorBandTest;AutomatedTest;ColorDatasetExample"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="ColorBandVisualTest:Clean;ColorBandTest:Clean;AutomatedTest:Clean;ColorDatasetExample:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="ColorBandVisualTest:Make;ColorBandTest:Make;AutomatedTest:Make;ColorDatasetExample:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

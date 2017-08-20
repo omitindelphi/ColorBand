@@ -7,6 +7,8 @@ uses
   Controls, Forms, Dialogs, ExtCtrls, StdCtrls, Buttons,
   ClrBandInterface,
   ComCtrls
+  ,Spring.Collections
+  ,StrUtils
   ;
 
 type
@@ -19,7 +21,6 @@ type
     Label1: TLabel;
     TrackBar2: TTrackBar;
     CheckBox1: TCheckBox;
-    Label2: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure TrackBar1Change(Sender: TObject);
     procedure BitBtn1Click(Sender: TObject);
@@ -28,27 +29,28 @@ type
     procedure TrackBar2Change(Sender: TObject);
   private
     { Private declarations }
+    FSVGFragment: string;
     FShowNeighborhood: boolean;
     FBandWidth:integer;
     FBandShift: integer;
-    FVarColors: Variant;
+    FColorList: IList<TColor>;
     function GetBandwidth(): integer;
     procedure SetBandwidth(Value: integer);
     procedure FillImage(BandWidth, BandShift: integer);
     function ColorNaming(clr: Tcolor): string;
-    //procedure FillFullForm(BandWidth: integer);
   protected
-//    procedure FillIn( BandWidth: integer);
-    procedure SetTestDim(const ImgX, ImgY, bandWidth, bandShift: integer;  toDisplayNeighborhood: boolean);
-    //procedure SetTestNeighborhood(ImgX, ImgY, bandWidth: integer);
+    function GetSVGFragment: string;
+    procedure SetTestDimWithoutWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
+    procedure SetSingleCellWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
+    procedure SetTestDimWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
     function PerimeterTop:string;
     function PerimeterBottom: string;
     procedure Teardown;
     property ShowNeighborhood: boolean read FShowNeighborhood write FShowNeighborhood;
   public
     { Public declarations }
-
   end;
+
 
 var
   Form1: TForm1;
@@ -56,19 +58,16 @@ var
 implementation
 uses
   ClrBand;
-
 {$R *.dfm}
+
 
 procedure TForm1.FillImage(BandWidth, BandShift: integer);
 var
   B: TBitmap;
   R: TRect;
   a: TStringList;
-  i: integer;
-  sCases: string;
-  ColorList:TColorList;
 begin
-  Label1.Caption := 'BandW: ' + IntToStr(Bandwidth) +' Pos ' + IntToStr(trackBar1.Position)
+  Label1.Caption := 'BandW: ' + IntToStr(Bandwidth) +' Pos ' + IntToStr(BandShift)
   +' h ' + IntTostr(Image1.height) + ' w ' + intToStr(Image1.Width);
   label1.Invalidate;
   B := TBitmap.Create;
@@ -78,32 +77,19 @@ begin
     B.Canvas.Brush.Color:=clwindow;
     B.Canvas.Brush.Style:=bsSolid;
     B.Canvas.FillRect(Rect(0,0, B.Width - 1, B.Height - 1));
+    Application.ProcessMessages;
 
     if ShowNeighborhood then
       R := Rect(B.Width div 5, B.Height div 5, (B.Width * 4 div 5), (B. Height * 4) div 5)
     else
       R := Rect(0,0, B.Width - 1, B. Height - 1);
     a := TStringlist.Create;
-    ColorList := TcolorList.Create;
     try
-      ColorList.Add(clRed);
-      ColorList.Add(clLime);
-      a.CommaText := //ClrBand.ColorStripedRectDebug(B.Canvas,R, FVarColors, BandWidth, '  A');
-                     ClrBand.ColorBandsOfListShift(B.Canvas,R, ColorList, BandWidth, Trackbar2.Position, '  A');
-      sCases := Label2.Caption;
-      for i := 0 to a.Count - 1 do
-        if CompareText(a[i], 'Case') = 0 then
-          if i< a.Count - 1 then
-            if Pos(',' + a[i + 1] + ',', sCases) > 0 then
-              System.Delete(sCases,
-                     Pos(',' + a[i + 1] + ',', sCases) + 1,
-                     Length(',' + a[i + 1] + ',') - 1
-                    );
-      Label2.Caption := sCases;
-              //Label2.Caption := Label2.Caption + a[i + 1] + ',' ;
+      FSVGFragment := ColorBandsOfListMovable(B.Canvas,R, FColorList, BandWidth, BandShift, '  A some text');
+
+      a.CommaText := FSVGFragment;
     finally
       a.Free;
-      ColorList.Free;
     end;
     Image1.Picture.Bitmap := B;
   finally
@@ -116,26 +102,19 @@ begin
   FillImage( GetBandwidth, FBandShift);
 end;
 
-
-//procedure TForm1.FillIn(BandWidth: integer);
-//begin
-//   SetTestDim(102, 240, 32, ShowNeighborhood);
-//end;
-
-
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-   FVarColors := VarArrayCreate([0,1], varInteger);
-   FVarColors[0] := clRed;
-   fVarColors[1] := clLime;
+   FColorList := Tcollections.CreateList<TColor>;
+   FColorList.Add(clRed);
+   FColorList.Add(clLime);
    TrackBar1.Position := 32;
-   Label2.Caption := ',1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,';
    FBandShift := 0;
 end;
 
 procedure TForm1.CheckBox1Click(Sender: TObject);
 begin
    self.ShowNeighborhood := CheckBox1.Checked;
+   FillImage(GetBandwidth, FBandShift);
 end;
 
 function TForm1.ColorNaming(clr: TColor):string;
@@ -175,10 +154,44 @@ begin
   end;
 end;
 
-procedure TForm1.SetTestDim(const ImgX, ImgY, bandWidth, bandShift: integer;  toDisplayNeighborhood: boolean);
+procedure TForm1.SetTestDimWithoutWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
 begin
+   Self.Hide;
+   FColorList.Clear;
+   FColorList.Add(clLime);
+   FcolorList.Add(clRed);
    SetBandwidth(bandWidth);
-   self.ShowNeighborhood := toDisplayNeighborhood;
+   self.ShowNeighborhood := False;
+   self.SetBounds(Left, Top, ImgX + 16, ImgY + 239);
+   Self.Show;
+   Application.ProcessMessages;
+   Sleep(1000);
+   Application.ProcessMessages;
+end;
+
+procedure TForm1.SetTestDimWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
+begin
+   Self.Hide;
+   FColorList.Clear;
+   FColorList.Add(clLime);
+   FcolorList.Add(clRed);
+   SetBandwidth(bandWidth);
+   self.ShowNeighborhood := True;
+   self.SetBounds(Left, Top, ImgX + 16, ImgY + 239);
+   Self.Show;
+   Application.ProcessMessages;
+   Sleep(1000);
+   Application.ProcessMessages;
+end;
+
+procedure TForm1.SetSingleCellWhiteBorder(const ImgX, ImgY, bandWidth,
+  bandShift: integer);
+begin
+   Self.Hide;
+   FColorList.Clear;
+   FColorList.Add(clBlue);
+   SetBandwidth(bandWidth);
+   self.ShowNeighborhood := True;
    self.SetBounds(Left, Top, ImgX + 16, ImgY + 239);
    Self.Show;
    Application.ProcessMessages;
@@ -219,6 +232,11 @@ begin
   Result := FBandwidth;
 end;
 
+function TForm1.GetSVGFragment: string;
+begin
+  Result := FSVGFragment;
+end;
+
 procedure TForm1.SetBandwidth(Value: integer);
 begin
   TrackBar1.OnChange := nil;
@@ -226,6 +244,7 @@ begin
   FBandWidth := Value;
   TrackBar1.OnChange := TrackBar1Change;
 end;
+
 
 procedure TForm1.Teardown;
 begin
@@ -247,7 +266,7 @@ end;
 procedure TForm1.TrackBar2Change(Sender: TObject);
 begin
   FBandShift := TrackBar2.Position;
-  TrackBar1Change(nil);
+  FillImage(FBandWidth, FBandShift);
 end;
 
 procedure TForm1.FormResize(Sender: TObject);
@@ -256,7 +275,5 @@ begin
   Label1.Left := (Self.ClientWidth  - Label1.Width ) div 2;
   FillImage(GetBandwidth, FBandShift);
 end;
-
-
 
 end.

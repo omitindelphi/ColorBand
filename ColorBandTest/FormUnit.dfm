@@ -43,13 +43,6 @@ object Form1: TForm1
       Height = 13
       Caption = 'Label1'
     end
-    object Label2: TLabel
-      Left = 112
-      Top = 112
-      Width = 31
-      Height = 13
-      Caption = 'Label2'
-    end
     object BitBtn1: TBitBtn
       Left = 128
       Top = 133

@@ -7,6 +7,7 @@ uses
   Dialogs, Grids, DBGrids, DB, DBClient, StdCtrls
   ,ClrBand, ExtCtrls, ComCtrls
   ,MidasLib, DBCtrls
+  ,Spring.Collections
   ;
 
 type
@@ -17,17 +18,17 @@ type
     Memo1: TMemo;
     ClientDataSet1: TClientDataSet;
     DataSource1: TDataSource;
-    DBGrid1: TDBGrid;
-    TrackBar1: TTrackBar;
+    DBGridDemo: TDBGrid;
+    TrackBarColorBandWidth: TTrackBar;
     Panel1: TPanel;
     GroupBox1: TGroupBox;
     cbRed: TCheckBox;
     cbGreen: TCheckBox;
     cbYellow: TCheckBox;
     procedure FormCreate(Sender: TObject);
-    procedure DBGrid1DrawColumnCell(Sender: TObject; const Rect: TRect;
+    procedure DBGridDemoDrawColumnCell(Sender: TObject; const Rect: TRect;
       DataCol: Integer; Column: TColumn; State: TGridDrawState);
-    procedure TrackBar1Change(Sender: TObject);
+    procedure TrackBarColorBandWidthChange(Sender: TObject);
     procedure ClientDataSet1FilterRecord(DataSet: TDataSet;
       var Accept: Boolean);
     procedure cbClick(Sender: TObject);
@@ -63,8 +64,8 @@ end;
 
 procedure TForm1.FormResize(Sender: TObject);
 begin
-  dbGrid1.Columns[1].Width := (DBGrid1.ClientWidth - DBGrid1.Columns[0].Width - DBGrid1.Columns[3].Width) div 2;
-  dbGrid1.Columns[2].Width := dbGrid1.Columns[1].Width;
+  dbGridDemo.Columns[1].Width := (dbGridDemo.ClientWidth - dbGridDemo.Columns[0].Width - dbGridDemo.Columns[3].Width) div 2;
+  dbGridDemo.Columns[2].Width := dbGridDemo.Columns[1].Width;
   cbRed.Left := GroupBox1.ClientWidth div 4 - cbRed.Width div 2;
   cbGreen.Left := GroupBox1.ClientWidth div 2 - cbGreen.Width div 2;
   cbYellow.Left := (3 * GroupBox1.ClientWidth) div 4 - cbYellow.Width div 2;
@@ -138,11 +139,11 @@ end;
 
 procedure TForm1.cbClick(Sender: TObject);
 begin
-  DBGrid1.DataSource.Dataset.DisableControls;
-  DBGrid1.DataSource.Dataset.Filtered := false;
-  DBGrid1.DataSource.Dataset.Filtered := isFiltered(); // to initiate re-filtering on reassignment
-  DBGrid1.DataSource.Dataset.EnableControls;
-  DBGrid1.Invalidate;
+  DbGridDemo.DataSource.Dataset.DisableControls;
+  DbGridDemo.DataSource.Dataset.Filtered := false;
+  DbGridDemo.DataSource.Dataset.Filtered := isFiltered(); // to initiate re-filtering on reassignment
+  DbGridDemo.DataSource.Dataset.EnableControls;
+  DbGridDemo.Invalidate;
 end;
 
 procedure TForm1.ClientDataSet1FilterRecord(DataSet: TDataSet;
@@ -161,14 +162,14 @@ begin
 
 end;
 
-procedure TForm1.DBGrid1DrawColumnCell(Sender: TObject; const Rect: TRect;
+procedure TForm1.DBGridDemoDrawColumnCell(Sender: TObject; const Rect: TRect;
   DataCol: Integer; Column: TColumn; State: TGridDrawState);
 const
   Dim=128;
 var
    Dataset:Tdataset;
    id:integer;
-   colorList:TColorList;
+   colorList:IList<TColor>;
    RowStatusSet: TRowStatusSet;
    cRed1,cLime1,cYellow1:Tcolor;
 begin
@@ -177,43 +178,40 @@ begin
 
    RowStatusSet := getRowStatuses(id);
 
-   DBGrid1.Canvas.Font.Color := clBlack;
-   DBGrid1.Canvas.Font.Style := [];
+   DbGridDemo.Canvas.Font.Color := clBlack;
+   DbGridDemo.Canvas.Font.Style := [];
    if RowIsSelected(State) then begin
           cRed1 :=clRed; cLime1:=clLime; cYellow1 := clYellow;
-          DBGrid1.Canvas.Font.Color := clBlue;
-          DBGrid1.Canvas.Font.Style := [fsBold];
+          DbGridDemo.Canvas.Font.Color := clBlue;
+          DbGridDemo.Canvas.Font.Style := [fsBold];
    end else begin
         cred1:=DimColor(clRed,dim); cLime1:=DimColor(clLime,dim); cYellow1:=DimColor(clYellow,dim);
    end;
 
-   colorList:=TColorList.Create;
-   try
-      if Red in RowStatusSet  then
-        colorList.Add(cRed1);
-      if Green in RowStatusSet then
-        colorList.Add(cLime1);
-      if Yellow in RowStatusSet then
-        colorList.Add(cYellow1);
+    colorList := TCollections.CreateList<TColor>;
+    if Red in RowStatusSet  then
+      colorList.Add(cRed1);
+    if Green in RowStatusSet then
+      colorList.Add(cLime1);
+    if Yellow in RowStatusSet then
+      colorList.Add(cYellow1);
 
-      if RowStatusSet = [] then
-         if RowIsSelected(State) then
-            colorlist.Add(clSilver)
-         else
-            colorList.Add(clWindow) ;
-      ColorBandsOfListShift(DBGrid1.Canvas, Rect, colorList,
-                Trackbar1.Position, // it is width of color strip
-                Rect.Left,                  // this is color-band shift, in pixels
-                Dataset.FieldByName(Column.FieldName).AsString );
-   finally
-    colorList.Free;
-   end;
+    if RowStatusSet = [] then
+       if RowIsSelected(State) then
+          colorlist.Add(clSilver)
+       else
+          colorList.Add(clWindow) ;
+    ColorBandsOfListMovable(DbGridDemo.Canvas, Rect, colorList,
+              TrackBarColorBandWidth.Position, // it is width of color strip
+              Rect.Left,                  // this is color-band shift, in pixels
+              Dataset.FieldByName(Column.FieldName).AsString );
+
 
 end;
 
-procedure TForm1.TrackBar1Change(Sender: TObject);
+procedure TForm1.TrackBarColorBandWidthChange(Sender: TObject);
 begin
-    DBGrid1.Invalidate;
+    DbGridDemo.Invalidate;
 end;
 
 end.
