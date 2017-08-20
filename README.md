@@ -29,7 +29,8 @@ BandShift - it is shift of colored pattern by X axis.
 
 Function returns SVG presentation of colored rectangle, with comments.
 
-Used Spring4Delphi framework for collection handling ( I like interfaced collections) , and testing is done using DunitX framework; 
+Uses Spring4Delphi framework for collection handling ( I like interfaced collections) , and testing is done using DunitX framework;
+Uses Xml.VerySimple (   http://blog.spreendigital.de/2014/09/13/verysimplexml-2-0/ ) for escaping text on SVG generation ( included) 
 
 
 https://bitbucket.org/sglienke/spring4d

@@ -67,7 +67,7 @@ var
   R: TRect;
   a: TStringList;
 begin
-  Label1.Caption := 'BandW: ' + IntToStr(Bandwidth) +' Pos ' + IntToStr(trackBar1.Position)
+  Label1.Caption := 'BandW: ' + IntToStr(Bandwidth) +' Pos ' + IntToStr(BandShift)
   +' h ' + IntTostr(Image1.height) + ' w ' + intToStr(Image1.Width);
   label1.Invalidate;
   B := TBitmap.Create;

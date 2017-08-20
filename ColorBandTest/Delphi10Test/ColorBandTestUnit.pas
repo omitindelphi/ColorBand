@@ -14,12 +14,12 @@ uses
 type
 
   [TestFixture]
-  TColorBandTest = class(TObject)
+  TColorBandTest = class( TObject)
   private
     FClrBand: IBandFill;
-    procedure SubtractUsedPolygonKinds(CasesUnUsedYet: IList<integer>; Width,
+    procedure SubtractUsedPolygonKinds( CasesUnUsedYet: IList<integer>; Width,
       Height: integer);
-    function ListToStr(Value: IList<integer>): string;
+    function ListToStr( Value: IList<integer>): string;
   public
     [Setup]
     procedure Setup;
@@ -29,13 +29,13 @@ type
 
      [Test]
      [TestCase('test for correct band shifting','0')]
-     [TestCase('test for correct band shifting','30')]
-     [TestCase('test for correct band shifting','-30')]
-     procedure TestForCorrectShift(BandShift:integer);
+     [TestCase('test for correct band shifting+30','30')]
+     [TestCase('test for correct band shifting-30','-30')]
+     procedure TestForCorrectShift( BandShift:integer);
 
      [Test]
      [TestCase('Test-W240-H319-BW102', '319, 240, 102, 0')]
-     procedure TestForCorrectBandsWithinDeclaredRect(Width, Height, BandWidth, BandShift:integer);
+     procedure TestForCorrectBandsWithinDeclaredRect( Width, Height, BandWidth, BandShift:integer);
 
 
      [Test]
@@ -46,11 +46,11 @@ type
      [TestCase('Test-W184-H801-BW223-Neighborhood', '184, 801, 223, 0')]
      [TestCase('Test-W184-H801-BW223-Neighbor+shift', '184, 801, 223, 90')]
      [TestCase('Test-W184-H801-BW223-Neighbor-shift', '184, 801, 223, -90')]
-     procedure TestForColorBandsStayContainedWithinRect(Width, Height, BandWidth, BandShift: integer);
+     procedure TestForColorBandsStayContainedWithinRect( Width, Height, BandWidth, BandShift: integer);
 
      [Test]
      [TestCase('Test-SVG-W240-H319-BW102-Neighborhood', '319, 240, 102, 0')]
-     procedure TestForSVGOutputPresence(Width, Height, BandWidth, BandShift: integer);
+     procedure TestForSVGOutputPresence( Width, Height, BandWidth, BandShift: integer);
 
      [Test]
      procedure TestForPolygonKindsCoverage;
@@ -61,7 +61,7 @@ uses
     AutomatedTestMainForm
     ,TestBandSVG;
 
-procedure TColorBandTest.TestForCorrectBandsWithinDeclaredRect(Width, Height, BandWidth, BandShift:integer);
+procedure TColorBandTest.TestForCorrectBandsWithinDeclaredRect( Width, Height, BandWidth, BandShift:integer);
 var
   sTop, sBottom: string;
 begin
@@ -73,7 +73,7 @@ begin
   Assert.IsTrue(Pos('Unknown', sTop) <= 0, 'There are empty bands on picture');
 end;
 
-procedure TColorBandTest.TestForCorrectShift(BandShift:integer);
+procedure TColorBandTest.TestForCorrectShift( BandShift:integer);
 var
   sBottom, SVG: string;
   Doc: IXMLDocument;
@@ -182,7 +182,6 @@ begin
   SubtractUsedPolygonKinds(CasesUnUsedYet, 75, 75);
 
   SubtractUsedPolygonKinds(CasesUnUsedYet, 30, 30);
-
 
   FClrBand.SetTestDimWhiteBorder(217, 216, 431, -123);
   SVG := FClrBand.GetSVGFragment();
