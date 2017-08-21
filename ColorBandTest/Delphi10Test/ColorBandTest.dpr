@@ -12,11 +12,9 @@ uses
   DUnitX.Loggers.Console,
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
-
   ColorBandTestUnit in 'ColorBandTestUnit.pas',
   ClrBand in '..\..\ClrBand.pas',
-  ClrBandInterface in '..\ClrBandInterface.pas',
-  AutomatedTestCanvasAid in 'AutomatedTestCanvasAid.pas';
+  ClrBandInterface in '..\ClrBandInterface.pas';
 
 var
   runner : ITestRunner;

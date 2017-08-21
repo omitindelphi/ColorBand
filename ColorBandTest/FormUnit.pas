@@ -39,6 +39,7 @@ type
     procedure FillImage(BandWidth, BandShift: integer);
     function ColorNaming(clr: Tcolor): string;
   protected
+    procedure SetColorAndShift(Colors: IList<TColor>; BandShift: integer);
     function GetSVGFragment: string;
     procedure SetTestDimWithoutWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
     procedure SetSingleCellWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
@@ -198,6 +199,22 @@ begin
    Sleep(1000);
    Application.ProcessMessages;
 end;
+
+procedure TForm1.SetColorAndShift(Colors: IList<TColor>;
+  BandShift: integer);
+begin
+   Self.Hide;
+   FColorList.Clear;
+   FColorList := Colors;
+   FBandShift := BandShift;
+   self.ShowNeighborhood := True;
+   self.SetBounds(Left, Top, 100 + 16, 100 + 239);
+   Self.Show;
+   Application.ProcessMessages;
+   Sleep(1000);
+   Application.ProcessMessages;
+end;
+
 
 function TForm1.PerimeterBottom: string;
 var

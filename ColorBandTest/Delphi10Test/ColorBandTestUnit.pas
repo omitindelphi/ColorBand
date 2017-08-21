@@ -9,6 +9,7 @@ uses
   ,ClrBandInterface
   ,XML.XMLIntf
   ,XMl.XMLdoc
+  ,Graphics
   ;
 
 type
@@ -26,6 +27,8 @@ type
     [TearDown]
     procedure TearDown;
 
+     [Test]
+     procedure TestForEmptyCell;
 
      [Test]
      [TestCase('test for correct band shifting','0')]
@@ -203,6 +206,17 @@ begin
                                              + ListToStr(CasesUnusedYet)
                                              + ' left yet'
                                              );
+end;
+
+procedure TColorBandTest.TestForEmptyCell;
+var
+  SVG: string;
+  TestColors: IList<TColor>;
+begin
+  TestColors := TCollections.CreateList<TColor>;
+  FClrBand.SetColorAndShift(TestColors, 0);
+  SVG := FClrBand.GetSVGFragment();
+  Assert.IsTrue(Length(SVG) > 0, 'No SVG generated at all');
 end;
 
 procedure TColorBandTest.Setup;
