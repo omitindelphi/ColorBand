@@ -222,7 +222,7 @@ type
     ColorIterator: integer;
     XIterator: integer;
     Band: TParallelogram;
-    Polygon: TCanvasPolygon;
+    Polygon: SerializablePolygon;
   begin
     Result := '';
     ColorIterator := -1;
@@ -874,7 +874,10 @@ end;
 
 class function TCellInsider.NormalizeBandshift( CellDescriptor: TLocalCellDescriptor): integer;
 begin
-  Result := CellDescriptor.BandShift mod ( CellDescriptor.Colors.Count * Abs(CellDescriptor.BandWidth));
+  if CellDescriptor.Colors.Count = 0 then
+    Result := 0
+  else
+    Result := CellDescriptor.BandShift mod ( CellDescriptor.Colors.Count * Abs(CellDescriptor.BandWidth));
 end;
 
 class function TCellInsider.NormalizeBandWidth( BandWidth: integer): integer;

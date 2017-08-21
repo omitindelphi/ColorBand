@@ -34,6 +34,7 @@ type
     procedure SetTestDimWithoutWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
     procedure SetTestDimWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
     procedure SetSingleCellWhiteBorder(const ImgX, ImgY, bandWidth, BandShift: integer);
+    procedure SetColorAndShift(Colors: IList<TColor>; BandShift: integer);
     procedure Teardown;
     function PerimeterTop:string;
     function PerimeterBottom: string;
@@ -91,6 +92,19 @@ begin
    Result := CellDescription;
 end;
 
+procedure TAutomatedTestForm.SetColorAndShift(Colors: IList<TColor>;
+  BandShift: integer);
+var
+  CellDescription: TCellDescription ;
+  SVGreturned: TSVGTestReturn;
+begin
+  CellDescription := PopulateCellDescription(100, 100, 20, BandShift);
+  CellDescription.Colors.Clear;
+  CellDescription.Colors := Colors;
+  CellDescription.WhiteBorderWidth := 50;
+  SVGreturned := SyncDisplayCell(CellDescription);
+end;
+
 procedure TAutomatedTestForm.SetSingleCellWhiteBorder(const ImgX, ImgY,
   BandWidth, BandShift: integer);
 var
@@ -101,7 +115,7 @@ begin
   CellDescription.WhiteBorderWidth := 50;
   CellDescription.Colors.Clear;
   CellDescription.Colors.Add(clBlue);
-   SVGreturned := SyncDisplayCell(CellDescription);
+  SVGreturned := SyncDisplayCell(CellDescription);
 end;
 
 procedure TAutomatedTestForm.SetTestDimWhiteBorder(const ImgX, ImgY, bandWidth,
