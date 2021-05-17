@@ -1,9 +1,9 @@
 object AutomatedTestForm: TAutomatedTestForm
   Left = 0
   Top = 0
+  Width = 335
+  Height = 192
   Caption = 'AutomatedTestForm'
-  ClientHeight = 153
-  ClientWidth = 319
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText

@@ -7,7 +7,7 @@ uses
   Controls, Forms, Dialogs, ExtCtrls, StdCtrls, Buttons,
   ClrBandInterface,
   ComCtrls
-  ,Spring.Collections
+//  ,Spring.Collections
   ,StrUtils
   ;
 
@@ -27,19 +27,21 @@ type
     procedure FormResize(Sender: TObject);
     procedure CheckBox1Click(Sender: TObject);
     procedure TrackBar2Change(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   private
     { Private declarations }
     FSVGFragment: string;
     FShowNeighborhood: boolean;
     FBandWidth:integer;
     FBandShift: integer;
-    FColorList: IList<TColor>;
+    FColorList: TList;//IList<TColor>;
     function GetBandwidth(): integer;
     procedure SetBandwidth(Value: integer);
     procedure FillImage(BandWidth, BandShift: integer);
     function ColorNaming(clr: Tcolor): string;
   protected
-    procedure SetColorAndShift(Colors: IList<TColor>; BandShift: integer);
+    procedure SetColorAndShift(Colors: TList;//IList<TColor>;
+                              BandShift: integer);
     function GetSVGFragment: string;
     procedure SetTestDimWithoutWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
     procedure SetSingleCellWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
@@ -105,9 +107,9 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-   FColorList := Tcollections.CreateList<TColor>;
-   FColorList.Add(clRed);
-   FColorList.Add(clLime);
+   FColorList := TList.Create;//Tcollections.CreateList<TColor>;
+   FColorList.Add( Pointer(Cardinal(clRed)));
+   FColorList.Add(Pointer(Cardinal(clLime)));
    TrackBar1.Position := 32;
    FBandShift := 0;
 end;
@@ -159,8 +161,8 @@ procedure TForm1.SetTestDimWithoutWhiteBorder(const ImgX, ImgY, bandWidth, bandS
 begin
    Self.Hide;
    FColorList.Clear;
-   FColorList.Add(clLime);
-   FcolorList.Add(clRed);
+   FColorList.Add(Pointer(Cardinal(clLime)));
+   FcolorList.Add(Pointer(Cardinal(clRed)));
    SetBandwidth(bandWidth);
    self.ShowNeighborhood := False;
    self.SetBounds(Left, Top, ImgX + 16, ImgY + 239);
@@ -174,8 +176,8 @@ procedure TForm1.SetTestDimWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: i
 begin
    Self.Hide;
    FColorList.Clear;
-   FColorList.Add(clLime);
-   FcolorList.Add(clRed);
+   FColorList.Add(Pointer(Cardinal(clLime)));
+   FcolorList.Add(Pointer(Cardinal(clRed)));
    SetBandwidth(bandWidth);
    self.ShowNeighborhood := True;
    self.SetBounds(Left, Top, ImgX + 16, ImgY + 239);
@@ -190,7 +192,7 @@ procedure TForm1.SetSingleCellWhiteBorder(const ImgX, ImgY, bandWidth,
 begin
    Self.Hide;
    FColorList.Clear;
-   FColorList.Add(clBlue);
+   FColorList.Add(Pointer(Cardinal(clBlue)));
    SetBandwidth(bandWidth);
    self.ShowNeighborhood := True;
    self.SetBounds(Left, Top, ImgX + 16, ImgY + 239);
@@ -200,7 +202,7 @@ begin
    Application.ProcessMessages;
 end;
 
-procedure TForm1.SetColorAndShift(Colors: IList<TColor>;
+procedure TForm1.SetColorAndShift(Colors: TList;//IList<TColor>;
   BandShift: integer);
 begin
    Self.Hide;
@@ -291,6 +293,11 @@ begin
   BitBtn1.Left := (Self.ClientWidth - BitBtn1.Width ) div 2;
   Label1.Left := (Self.ClientWidth  - Label1.Width ) div 2;
   FillImage(GetBandwidth, FBandShift);
+end;
+
+procedure TForm1.FormDestroy(Sender: TObject);
+begin
+  FColorList.Free;
 end;
 
 end.

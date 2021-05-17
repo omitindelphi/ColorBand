@@ -9,7 +9,7 @@ uses
   Spring,
   Spring.Collections,
   DisplayCellInterface,
-  ClrBandInterface
+  ClrBandInterface, Classes, Controls, Buttons
   ;
 
 type

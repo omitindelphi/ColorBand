@@ -21,20 +21,21 @@ uses Classes,Windows,Graphics
 ,Types
 ,SysUtils
 ,StrUtils
-,Spring
-,Spring.Collections
-,Xml.VerySimple
+//,Spring
+//,Spring.Collections
+//,Xml.VerySimple
+,ClrBandInterface
 ;
 
 function ColorBandsOfListMovable( Canvas:TCanvas;
                                   Rect:TRect;
-                                  ColorList: IList<TColor> ;
+                                  ColorList: TList;//IList<TColor> ;
                                   BandWidth, BandShift:integer;
                                   Text:string): string;
 implementation
 
-uses
-  UITypes;
+//uses
+//  UITypes;
 
 type
 
@@ -51,7 +52,7 @@ type
     Text:string;
     Rect: TRect;
     RectNoBorders: TRect;
-    Colors: IList<TColor>;
+    Colors: TList;//IList<TColor>;
     BandWidth: integer;
     Bandshift: integer;
     Canvas: TCanvas;
@@ -59,8 +60,8 @@ type
   end;
 
   TParallelogram = record
-    public
-      function BandWidth: integer;
+//    public
+//      function BandWidth: integer;
 //      function Edges: TQuattroEdges;
     case Integer of
     0: (Vertexes: array[0..3] of TPoint);
@@ -82,7 +83,7 @@ type
        );
    end;
 
-   TpointArray = TArray<Tpoint>;
+   TpointArray = Array of TPoint; //TArray<Tpoint>;
 
    TVertexesCase = record
      Vertexes: TpointArray;
@@ -128,38 +129,46 @@ type
     constructor CreateAsSingleColorRect(Cell: TRect; ColorToFill: Tcolor);
     function SerializeAsSVGFragment: string;
     procedure Draw(Canvas : TCanvas);
-  end;
-
-  TCanvasPolygonInsider = class helper for TCanvasPolygon
+    
     function SerializeVortexes: string;
     function SerializeFillStyle: string;
     function SerializePolygonKind: string;
   end;
 
+  {
+  TCanvasPolygonInsider = class(TCanvasPolygon) //helper for TCanvasPolygon
+  public
+    function SerializeVortexes: string;
+    function SerializeFillStyle: string;
+    function SerializePolygonKind: string;
+  end;
+  }
+
   TCellInsider = class
   private
-    class function ColorToRGBString( Color: TColor): string; static;
-    class function SVGTagWrap( SVGFragment: string; Rect: TRect): string; static;
-    class function PolygonFragmentToSVG( TextRectCanvas: TLocalCellDescriptor; PolygonFragmentSVG: string): string; static;
-    class function StoreCanvasPenBrush( Canvas: TCanvas): GraphicStorage; static;
+    class function ColorToRGBString( Color: TColor): string; //static;
+    class function SVGTagWrap( SVGFragment: string; Rect: TRect): string; //static;
+    class function PolygonFragmentToSVG( TextRectCanvas: TLocalCellDescriptor; PolygonFragmentSVG: string): string; //static;
+    class function StoreCanvasPenBrush( Canvas: TCanvas): GraphicStorage; //static;
     class procedure RestoreCanvasPenBrush( Storage: GraphicStorage; Canvas: TCanvas);
-    class function TextToSVGFragment( TextRectCanvas: TLocalCellDescriptor): string; static;
-    class function GetDefaultFontName: string; static;
-    class function NormalizeBandWidth( BandWidth: integer): integer; static;
-    class function NormalizeBandshift( CellDescriptor: TLocalCellDescriptor): integer; static;
+    class function TextToSVGFragment( TextRectCanvas: TLocalCellDescriptor): string; //static;
+    class function GetDefaultFontName: string; //static;
+    class function NormalizeBandWidth( BandWidth: integer): integer; //static;
+    class function NormalizeBandshift( CellDescriptor: TLocalCellDescriptor): integer; //static;
     class function DrawSingleCellForSingleColor(
-      CellDescriptor: TLocalCellDescriptor): string; static;
-    class procedure ClearCellCanvas( CellDescriptor: TLocalCellDescriptor); static;
+      CellDescriptor: TLocalCellDescriptor): string; //static;
+    class procedure ClearCellCanvas( CellDescriptor: TLocalCellDescriptor); //static;
     class function InitializeXIterator(
-      CellDescriptor: TlocalCelldescriptor): integer; static;
+      CellDescriptor: TlocalCelldescriptor): integer; //static;
     class function PopulateWorkingRectWithClippedBorder(
-      OriginalCell: TRect): TRect; static;
+      OriginalCell: TRect): TRect; //static;
     class function PopulateParallelogram( XIterator: integer; R: TRect;
-      CellDescriptor: TLocalCellDescriptor): TParallelogram; static;
+      CellDescriptor: TLocalCellDescriptor): TParallelogram; //static;
     class function PopulateCellDescriptor( Canvas: TCanvas; Rect: TRect;
-      ColorList: IList<TColor>; BandWidth, BandShift: integer;
-      Text: string): TLocalCellDescriptor; static;
-    class procedure PlaceTextToCellCanvas( CellDescriptor: TLocalCellDescriptor); static;
+      ColorList: TList;//IList<TColor>;
+      BandWidth, BandShift: integer;
+      Text: string): TLocalCellDescriptor; //static;
+    class procedure PlaceTextToCellCanvas( CellDescriptor: TLocalCellDescriptor); //static;
   end;
 
  IStripGenerator = interface
@@ -192,6 +201,36 @@ type
     function CreateStripGenerator( CellDescriptor: TLocalCellDescriptor): IStripGenerator;
   end;
 
+function RectWidth(Rect: TRect): integer;
+begin
+  Result := Rect.Right - Rect.Left;
+end;
+
+function RectHeight(Rect: TRect): integer;
+begin
+  Result := Rect.Bottom - Rect.Top;
+end;
+
+function Escape(const Value: String): String;
+begin
+  Result := AnsiReplaceStr(Value, '&',  '&amp;');
+  Result := AnsiReplaceStr(Result, '<', '&lt;');
+  Result := AnsiReplaceStr(Result, '>', '&gt;');
+  Result := AnsiReplaceStr(Result, '"', '&quot;');
+  Result := AnsiReplaceStr(Result,'''', '&apos;')
+end;
+
+function ParallelogramBandWidth(Prgm: TParallelogram): integer;
+begin
+  Result := Prgm.B.X - Prgm.A.X;
+  if Result <> Prgm.C.X - Prgm.D.X then
+    raise Exception.Create(
+                  Format('Attempt to use malformed parallelogram: '
+                       + '(%d %d) (%d %d) (%d %d) (%d %d)',
+                         [Prgm.xa,Prgm.ya,Prgm.xb,Prgm.yb,Prgm.xc,Prgm.yc,Prgm.xd,Prgm.yd])
+                          );
+end;
+
   {TStripGeneratorFactory }
   function TStripGeneratorFactory.CreateStripGenerator( CellDescriptor: TLocalCellDescriptor): IStripGenerator;
   begin
@@ -212,7 +251,7 @@ type
   begin
     LocalDesc := CellDescriptor;
     if LocalDesc.Colors.Count = 0 then
-      LocalDesc.Colors.Add(clWindow);
+      LocalDesc.Colors.Add(Pointer(cardinal(clWindow)));
       Result := TCellInsider.DrawSingleCellForSingleColor(LocalDesc);
   end;
 
@@ -229,7 +268,9 @@ type
     XIterator := TCellInsider.InitializeXIterator( CellDescriptor );
 
     begin
-     while xIterator < CellDescriptor.RectNoBorders.Width + CellDescriptor.RectNoBorders.Height
+     while xIterator < RectWidth(CellDescriptor.RectNoBorders)  //CellDescriptor.RectNoBorders.Width
+                       +
+                       RectHeight(CellDescriptor.RectNoBorders)//CellDescriptor.RectNoBorders.Height
      do
       begin
         XIterator := XIterator + CellDescriptor.BandWidth;
@@ -238,7 +279,7 @@ type
         Band := TCellInsider.PopulateParallelogram( XIterator, CellDescriptor.RectNoBorders, CellDescriptor);
         Polygon := TCanvasPolygon.CreateAsCellToCrossParallelogram( CellDescriptor.RectNoBorders,
                                                                     Band,
-                                                                    CellDescriptor.Colors[ColorIterator mod CellDescriptor.Colors.Count]
+                                                                    TColor(Cardinal(CellDescriptor.Colors[ColorIterator mod CellDescriptor.Colors.Count]))
                                                                   );
         Polygon.Draw(CellDescriptor.Canvas);
         Result := Result + Polygon.SerializeAsSVGFragment();
@@ -382,8 +423,9 @@ type
     iterator := Band.xd - Cell.Left;                                           //  |  \
     SetLength(Result.Vertexes, 3);                                             //  |   \
     Result.Vertexes[0].X:= Cell.Left; Result.Vertexes[0].Y:= Cell.Bottom;      //  |____\
-    Result.Vertexes[1].X:= Cell.Left; Result.Vertexes[1].Y:= Cell.Bottom - iterator - Band.BandWidth;
-    Result.Vertexes[2].X:= Cell.Left + iterator + band.BandWidth; Result.Vertexes[2].Y:= Cell.Bottom;
+    Result.Vertexes[1].X:= Cell.Left; Result.Vertexes[1].Y:= Cell.Bottom - iterator - ParallelogramBandWidth(Band);//Band.BandWidth;
+    Result.Vertexes[2].X:= Cell.Left + iterator + ParallelogramBandWidth(Band);//Band.BandWidth;
+    Result.Vertexes[2].Y:= Cell.Bottom;
   end;
 
   class function TCanvasPolygon.GenerateVertexCase02( Cell:TRect; Band: Tparallelogram): TVertexesCase;
@@ -399,7 +441,7 @@ type
       SetLength(Result.Vertexes, 4);                                         //
       Result.Vertexes[0].X:=xd; Result.Vertexes[0].Y:=R.Bottom;
       Result.Vertexes[1].X:=R.Left; Result.Vertexes[1].Y:=R.Bottom-iterator;
-      Result.Vertexes[2].X:=R.Left; Result.Vertexes[2].Y:=R.Bottom-iterator-BandWidth;
+      Result.Vertexes[2].X:=R.Left; Result.Vertexes[2].Y:=R.Bottom-iterator-ParallelogramBandWidth(Band);//BandWidth;
       Result.Vertexes[3].X:=xc; Result.Vertexes[3].Y:=R.Bottom;
     end;
   end;
@@ -416,8 +458,9 @@ type
     begin                                                //   |____|
       SetLength(Result.Vertexes, 4);
       Result.Vertexes[0].X:= R.Left; Result.Vertexes[0].Y:= R.Bottom;
-      Result.Vertexes[1].X:= R.Left; Result.Vertexes[1].Y:= R.Bottom - iterator - BandWidth;
-      Result.Vertexes[2].X:= R.Right; Result.Vertexes[2].Y:= R.Bottom - iterator - BandWidth + Cell.Width;
+      Result.Vertexes[1].X:= R.Left; Result.Vertexes[1].Y:= R.Bottom - iterator - ParallelogramBandWidth(Band);//BandWidth;
+      Result.Vertexes[2].X:= R.Right; Result.Vertexes[2].Y:= R.Bottom - iterator - ParallelogramBandWidth(Band)//BandWidth
+                                                                                 + RectWidth(Cell);//Cell.Width;
       Result.Vertexes[3].X:= R.Right; Result.Vertexes[3].Y:= R.Bottom;
     end
   end;
@@ -435,7 +478,7 @@ type
       Setlength(Result.Vertexes,5);
       Result.Vertexes[0].X:=xd; Result.Vertexes[0].Y:= R.Bottom;
       Result.Vertexes[1].X:= R.Left; Result.Vertexes[1].Y:= R.Bottom - iterator;
-      Result.Vertexes[2].X:= R.Left; Result.Vertexes[2].Y:= R.Bottom - iterator - BandWidth;
+      Result.Vertexes[2].X:= R.Left; Result.Vertexes[2].Y:= R.Bottom - iterator - ParallelogramBandWidth(Band);//BandWidth;
       Result.Vertexes[3].X:= R.Right; Result.Vertexes[3].Y := R.Bottom - (xc - R.Right);
       Result.Vertexes[4]:=Point(R.Right, R.Bottom);
     end
@@ -453,9 +496,10 @@ type
     begin                                       //   \|
       Setlength(Result.Vertexes,4);             //    |
       Result.Vertexes[0].x:=R.left;	Result.Vertexes[0].y:=R.bottom - iterator;
-      Result.Vertexes[1].x:=R.left;	Result.Vertexes[1].y:=R.bottom - iterator - BandWidth;
-      Result.Vertexes[2].x:=R.right;	Result.Vertexes[2].y:=R.bottom - iterator + Cell.Width - BandWidth;
-      Result.Vertexes[3].x:=R.right;	Result.Vertexes[3].y:=R.bottom - iterator + Cell.Width;
+      Result.Vertexes[1].x:=R.left;	Result.Vertexes[1].y:=R.bottom - iterator - ParallelogramBandWidth(Band);//BandWidth;
+      Result.Vertexes[2].x:=R.right;	Result.Vertexes[2].y:=R.bottom - iterator + RectWidth(Cell)//Cell.Width
+                                                                                  - ParallelogramBandWidth(Band);//BandWidth;
+      Result.Vertexes[3].x:=R.right;	Result.Vertexes[3].y:=R.bottom - iterator + RectWidth(Cell);//Cell.Width;
     end;
   end;
 
@@ -506,7 +550,8 @@ type
       Result.Vertexes[0].X := xd;      Result.Vertexes[0].Y := R.Bottom;
       Result.Vertexes[1].X := xa;      Result.Vertexes[1].Y := R.Top;
       Result.Vertexes[2].X := xb;      Result.Vertexes[2].Y := R.Top;
-      Result.Vertexes[3].X := R.Right; Result.Vertexes[3].Y := R.Bottom-(iterator-Cell.Width)-BandWidth;
+      Result.Vertexes[3].X := R.Right; Result.Vertexes[3].Y := R.Bottom - (iterator - RectWidth(Cell)) //Cell.Width)
+                                                                        - ParallelogramBandWidth(Band);//BandWidth;
       Result.Vertexes[4]:=Point(R.Right,R.Bottom);
     end;
   end;
@@ -522,10 +567,11 @@ type
     with Band do                                 //         \|
     begin                                        //          |
       SetLength(Result.Vertexes,4);
-      Result.Vertexes[0].X := R.Right; Result.Vertexes[0].Y := R.Bottom - iterator + Cell.Width;
+      Result.Vertexes[0].X := R.Right; Result.Vertexes[0].Y := R.Bottom - iterator + RectWidth(Cell);//Cell.Width;
       Result.Vertexes[1].X := xa;      Result.Vertexes[1].Y := R.Top;
       Result.Vertexes[2].X := xb;      Result.Vertexes[2].Y := R.Top;
-      Result.Vertexes[3].X := R.Right; Result.Vertexes[3].Y := R.Bottom - (iterator - Cell.Width) - BandWidth;
+      Result.Vertexes[3].X := R.Right; Result.Vertexes[3].Y := R.Bottom - (iterator - RectWidth(Cell))//Cell.Width)
+                                                                        - ParallelogramBandWidth(Band);//BandWidth;
     end;
   end;
 
@@ -540,7 +586,7 @@ type
     with Band do                                           //    \ |
     begin                                                  //     \|
       SetLength(Result.Vertexes,3);                        //      |
-      Result.Vertexes[0].X := R.Right; Result.Vertexes[0].Y := R.Bottom - iterator + Cell.Width;
+      Result.Vertexes[0].X := R.Right; Result.Vertexes[0].Y := R.Bottom - iterator + RectWidth(Cell);//Cell.Width;
       Result.Vertexes[1].X :=xa;       Result.Vertexes[1].Y := R.Top;
       Result.Vertexes[2] := Point(R.Right,R.Top);
     end;
@@ -643,7 +689,7 @@ type
       Result.Vertexes[0].x:=R.left;		Result.Vertexes[0].y:=R.bottom - iterator;
       Result.Vertexes[1].x:=R.left;		Result.Vertexes[1].y:=R.top;
       Result.Vertexes[2].x:=R.right;	  Result.Vertexes[2].y:=R.top;
-      Result.Vertexes[3].x:=R.right;	  Result.Vertexes[3].y:=R.bottom - iterator + Cell.Width;
+      Result.Vertexes[3].x:=R.right;	  Result.Vertexes[3].y:=R.bottom - iterator + RectWidth(Cell); //Cell.Width;
     end;
   end;
 
@@ -734,19 +780,27 @@ function TCanvasPolygon.SerializeAsSVGFragment: string;
   end;
 
 { TCanvasPolygonInsider }
-function TCanvasPolygonInsider.SerializeVortexes: string;
+function {TCanvasPolygonInsider}TCanvasPolygon.SerializeVortexes: string;
 var
     kVortex: TPoint;
+    jterator: integer;
  begin
      //Example as comma-pair, separated by space: "200,10 250,190 160,210"
-     for kVortex in VertexesCase.Vertexes do
+//     for kVortex in VertexesCase.Vertexes do
+//        Result := Result + Format('%d,%d ', [kVortex.X, kVortex.Y]);
+    Result := '';
+    for jterator := 0 to High(VertexesCase.Vertexes) do
+    begin
+        kVortex := VertexesCase.Vertexes[jterator];
         Result := Result + Format('%d,%d ', [kVortex.X, kVortex.Y]);
+    end;
+
     Result := AnsiLeftStr(Result, Length(Result) - 1);
     Result := AnsiQuotedStr(Result, '"');
 end;
 
 
-function TCanvasPolygonInsider.SerializeFillStyle: string;
+function {TCanvasPolygonInsider}TCanvasPolygon.SerializeFillStyle: string;
 begin
   Result :=  ' '
            + Format('style="fill: %s;"',
@@ -755,7 +809,7 @@ begin
                     ]);
 end;
 
-function TCanvasPolygonInsider.SerializePolygonKind: string;
+function {TCanvasPolygonInsider}TCanvasPolygon.SerializePolygonKind: string;
 begin
   Result := Char(13) + char(10)
           + Format('<!-- Polygon variation Case %d -->'+#13+#10,[PolygonCase()]);
@@ -793,7 +847,7 @@ begin
                         FontSize,
                         ColorToRGBString(FontColor)
                       ])
-             + TXmlVerySimple.Escape(TextRectCanvas.Text)
+             + {TXmlVerySimple.}Escape(TextRectCanvas.Text)
              +'</text>';
 
 end;
@@ -803,7 +857,8 @@ begin
 //Example: <svg height="30" width="200"> ...  </svg>
   Result := Format('<svg version="1.1" baseProfile="full" '
                  + 'height="%d" width="%d" xmlns="http://www.w3.org/2000/svg">' ,
-                    [Rect.Height,Rect.Width])
+                    [RectHeight(Rect), RectWidth(Rect)]//[Rect.Height,Rect.Width]
+                  )
            + #13#10 + SVGFragment + #13#10
            +'</svg>'+ #13#10;
 end;
@@ -849,7 +904,7 @@ class function TCellInsider.DrawSingleCellForSingleColor( CellDescriptor: TLocal
 var
   Polygon: SerializablePolygon;
 begin
-  Polygon := TCanvasPolygon.CreateAsSingleColorRect( CellDescriptor.Rect,CellDescriptor.Colors.Items[0]);
+  Polygon := TCanvasPolygon.CreateAsSingleColorRect( CellDescriptor.Rect, TColor(Cardinal(CellDescriptor.Colors.Items[0])));
   Polygon.Draw(CellDescriptor.Canvas);
   CellDescriptor.Canvas.TextRect(CellDescriptor.Rect,
                                   CellDescriptor.Rect.Left+1,
@@ -905,7 +960,7 @@ end;
 
 class function TCellInsider.PopulateCellDescriptor( Canvas:TCanvas;
                                   Rect:TRect;
-                                  ColorList: IList<TColor> ;
+                                  ColorList: TList;//IList<TColor> ;
                                   BandWidth, BandShift:integer;
                                   Text:string): TLocalCellDescriptor;
 begin
@@ -923,7 +978,7 @@ class function TCellInsider.PopulateParallelogram( XIterator: integer; R:TRect; 
 var
   xa,xb,xc,xd: integer;
 begin
-  xa:= R.Left + XIterator - R.Height;
+  xa:= R.Left + XIterator - RectHeight(R);//R.Height;
   xb:=xa + CellDescriptor.BandWidth;
   xc:= R.Left + xIterator + cellDescriptor.Bandwidth;
   xd:= R.Left + xIterator;
@@ -957,7 +1012,7 @@ end;
 
 function ColorBandsOfListMovable( Canvas:TCanvas;
                                   Rect:TRect;
-                                  ColorList: IList<TColor> ;
+                                  ColorList: TList;//IList<TColor> ;
                                   BandWidth, BandShift:integer;
                                   Text:string): string;
 var
@@ -987,6 +1042,7 @@ begin
 end;
 
 { Tparallelogram }
+{
 function Tparallelogram.BandWidth: integer;
 begin
   Result := Self.B.X - Self.A.X;
@@ -997,6 +1053,9 @@ begin
                          [xa,ya,xb,yb,xc,yc,xd,yd])
                           );
 end;
+}
+
+
 
 end.
 

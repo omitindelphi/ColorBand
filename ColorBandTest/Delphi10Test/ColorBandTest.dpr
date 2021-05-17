@@ -3,15 +3,15 @@ program ColorBandTest;
 
 {$IFNDEF TESTINSIGHT}
 {$APPTYPE CONSOLE}
-{$ENDIF}{$STRONGLINKTYPES ON}
+{$ENDIF}//{$STRONGLINKTYPES ON}
 uses
-  System.SysUtils,
-  {$IFDEF TESTINSIGHT}
-  TestInsight.DUnitX,
-  {$ENDIF }
-  DUnitX.Loggers.Console,
-  DUnitX.Loggers.Xml.NUnit,
-  DUnitX.TestFramework,
+  SysUtils,
+//  {$IFDEF TESTINSIGHT}
+//  TestInsight.DUnitX,
+//  {$ENDIF }
+//  DUnitX.Loggers.Console,
+//  DUnitX.Loggers.Xml.NUnit,
+  {DUnitX.}TestFramework,
   ColorBandTestUnit in 'ColorBandTestUnit.pas',
   ClrBand in '..\..\ClrBand.pas',
   ClrBandInterface in '..\ClrBandInterface.pas';
@@ -23,7 +23,7 @@ var
   nunitLogger : ITestLogger;
 begin
 {$IFDEF TESTINSIGHT}
-  TestInsight.DUnitX.RunRegisteredTests;
+  {TestInsight.DUnitX.}RunRegisteredTests;
   exit;
 {$ENDIF}
   try

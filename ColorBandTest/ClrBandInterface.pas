@@ -2,8 +2,11 @@ unit ClrBandInterface;
 
 interface
 uses
-  Spring.Collections,
-  Graphics;
+//  Spring.Collections,
+   Classes
+  ,StrUtils
+  ,Types
+  ,Graphics;
 
 type
    IBandFill = interface(IInvokable)
@@ -11,12 +14,16 @@ type
     procedure SetTestDimWithoutWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
     procedure SetTestDimWhiteBorder(const ImgX, ImgY, bandWidth, bandShift: integer);
     procedure SetSingleCellWhiteBorder(const ImgX, ImgY, bandWidth, BandShift: integer);
-    procedure SetColorAndShift(Colors: IList<TColor>; BandShift: integer);
+    procedure SetColorAndShift(Colors: TList; //IList<TColor>;
+    							BandShift: integer);
     procedure Teardown;
     function PerimeterTop:string;
     function PerimeterBottom: string;
     function GetSVGFragment: string;
   end;
+
+
 implementation
+
 
 end.

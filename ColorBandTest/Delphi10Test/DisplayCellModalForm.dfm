@@ -1,9 +1,9 @@
 object DisplayCellForm: TDisplayCellForm
   Left = 0
   Top = 0
+  Width = 651
+  Height = 338
   Caption = 'DisplayCellForm'
-  ClientHeight = 299
-  ClientWidth = 635
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText

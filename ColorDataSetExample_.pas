@@ -7,7 +7,7 @@ uses
   Dialogs, Grids, DBGrids, DB, DBClient, StdCtrls
   ,ClrBand, ExtCtrls, ComCtrls
   ,MidasLib, DBCtrls
-  ,Spring.Collections
+//  ,Spring.Collections
   ;
 
 type
@@ -169,7 +169,7 @@ const
 var
    Dataset:Tdataset;
    id:integer;
-   colorList:IList<TColor>;
+   colorList:TList;//IList<TColor>;
    RowStatusSet: TRowStatusSet;
    cRed1,cLime1,cYellow1:Tcolor;
 begin
@@ -188,19 +188,19 @@ begin
         cred1:=DimColor(clRed,dim); cLime1:=DimColor(clLime,dim); cYellow1:=DimColor(clYellow,dim);
    end;
 
-    colorList := TCollections.CreateList<TColor>;
+    colorList := TList.Create;//TCollections.CreateList<TColor>;
     if Red in RowStatusSet  then
-      colorList.Add(cRed1);
+      colorList.Add(Pointer(Cardinal(cRed1)));
     if Green in RowStatusSet then
-      colorList.Add(cLime1);
+      colorList.Add(Pointer(Cardinal(cLime1)));
     if Yellow in RowStatusSet then
-      colorList.Add(cYellow1);
+      colorList.Add(Pointer(Cardinal(cYellow1)));
 
     if RowStatusSet = [] then
        if RowIsSelected(State) then
-          colorlist.Add(clSilver)
+          colorlist.Add(Pointer(Cardinal(clSilver)))
        else
-          colorList.Add(clWindow) ;
+          colorList.Add(Pointer(Cardinal(clWindow))) ;
     ColorBandsOfListMovable(DbGridDemo.Canvas, Rect, colorList,
               TrackBarColorBandWidth.Position, // it is width of color strip
               Rect.Left,                  // this is color-band shift, in pixels

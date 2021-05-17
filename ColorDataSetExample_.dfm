@@ -1,9 +1,9 @@
 object Form1: TForm1
   Left = 923
   Top = 419
+  Width = 587
+  Height = 503
   Caption = 'Form1'
-  ClientHeight = 464
-  ClientWidth = 571
   Color = clBtnFace
   Constraints.MinHeight = 500
   Constraints.MinWidth = 580
