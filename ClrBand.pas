@@ -874,11 +874,14 @@ begin
 end;
 
 class function TCellInsider.ColorToRGBString( Color: TColor): string;
+var
+  uColor: Longint;
 begin
+  uColor := ColorToRGB(Color); // to deal with system colors and avoid exception if Range Checking is ON in Project properties - Compiler
   Result := Format('rgb(%d ,%d, %d)',
-                    [getRValue(Color),
-                     getGValue(Color),
-                     getBValue(Color)
+                    [getRValue(uColor),
+                     getGValue(uColor),
+                     getBValue(uColor)
                     ]);
 end;
 
